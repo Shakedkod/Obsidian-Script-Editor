@@ -1,0 +1,11 @@
+{
+	"id": "script-editor",
+	"name": "Script Editor",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "A simple script editor plugin for Obsidian.md that allows you to write scripts in the industry standard format.",
+	"author": "Obsidian",
+	"authorUrl": "",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
