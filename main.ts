@@ -1,10 +1,9 @@
-import { Plugin } from 'obsidian';
+import { Notice, Plugin } from 'obsidian';
 import { ScriptView, SCRIPT_VIEW_TYPE } from "./src/ScriptView";
+import { ScriptNameModal } from "./src/scriptCreatorModel";
 
-export default class MyPlugin extends Plugin 
-{
-	async onload() 
-	{
+export default class MyPlugin extends Plugin {
+	async onload() {
 		this.registerView(
 			SCRIPT_VIEW_TYPE,
 			(leaf) => new ScriptView(leaf)
@@ -14,10 +13,19 @@ export default class MyPlugin extends Plugin
 		this.addCommand({
 			id: 'create-new-script',
 			name: 'Create New Script',
-			callback: () => {
-				const fileName = `New Script ${new Date().toLocaleDateString()}.script`;
-				console.log(`Creating new script file: ${fileName}`);
-				this.app.vault.create(fileName, "");
+			callback: async () => {
+				new ScriptNameModal(this.app, async (name) => {
+					const safeName = name.replace(/[\\/:*?"<>|]/g, '-');
+					const fileName = `${safeName}.script`;
+
+					try {
+						const file = await this.app.vault.create(fileName, `---\ntitle: ${name}\n---\n`);
+						const leaf = this.app.workspace.getLeaf(true);
+						await leaf.openFile(file);
+					} catch (err) {
+						new Notice("Failed to create file: " + err.message);
+					}
+				}).open();
 			}
 		});
 
@@ -25,8 +33,7 @@ export default class MyPlugin extends Plugin
 		this.registerExtensions(["script"], SCRIPT_VIEW_TYPE);
 	}
 
-	onunload() 
-	{
+	onunload() {
 		// Cleanup if necessary
 		this.app.workspace.detachLeavesOfType(SCRIPT_VIEW_TYPE);
 	}
