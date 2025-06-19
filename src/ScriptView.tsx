@@ -1,8 +1,11 @@
-import { TextFileView, WorkspaceLeaf, TFile } from "obsidian";
+import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { ScriptEditor } from "./components/ScriptEditor";
 import React from "react";
 import { ScriptMetadata } from "./scriptParser";
+import * as fs from "fs";
+import path from "path";
+import { StandardFonts } from "pdf-lib";
 
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";
@@ -62,6 +65,9 @@ export class ScriptView extends TextFileView
 
     async onLoadFile(file: TFile): Promise<void> 
     {
+        const AlefRegular = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf"));
+        const AlefBold = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf"));
+
         await super.onLoadFile(file);
         const content = await this.app.vault.read(file);
         this.data = content;
@@ -77,6 +83,8 @@ export class ScriptView extends TextFileView
                 app={this.app}
                 setData={(data: string) => this.setViewData(data)}
                 onSave={() => this.hasUnsavedChanges = false}
+                AlefRegular={AlefRegular}
+                AlefBold={AlefBold}
             />
         );
     }

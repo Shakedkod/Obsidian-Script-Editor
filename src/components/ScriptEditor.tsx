@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App } from "obsidian";
-import { scriptLineToReact, parseLine, ScriptElementType, ScriptMetadata } from "src/scriptParser";
+import parseFull, { scriptLineToReact, parseLine, ScriptMetadata, exportToPdf } from "src/scriptParser";
 
 function isScene(obj: any): obj is { id: number; heading: string; elements: any[] } {
     return obj && typeof obj === "object" && "id" in obj && "heading" in obj && "elements" in obj;
@@ -102,7 +102,17 @@ function serializeFrontmatter(metadata: ScriptMetadata): string {
     return `---\n${lines.join('\n')}\n---\n`;
 }
 
-export function ScriptEditor({ file, app, setData, onSave }: { file: TFile; app: App, setData: (data: string) => void; onSave?: () => void; }): JSX.Element {
+interface Props
+{
+    file: TFile;
+    app: App;
+    setData: (data: string) => void;
+    onSave?: () => void;
+    AlefRegular: Uint8Array;
+    AlefBold: Uint8Array;
+}
+
+export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold }: Props): JSX.Element {
     const [fullText, setFullText] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
@@ -258,6 +268,12 @@ export function ScriptEditor({ file, app, setData, onSave }: { file: TFile; app:
                         disabled={isSaving}
                     >
                         {isSaving ? "Saving..." : "Save (Ctrl+S)"}
+                    </button>
+                    <button
+                        style={{"paddingTop":"0.25rem","paddingBottom":"0.25rem","paddingLeft":"0.75rem","paddingRight":"0.75rem","borderRadius":"0.25rem","backgroundColor":"#F59E0B","color":"#ffffff","border":"none","cursor":"pointer"}}
+                        onClick={() => exportToPdf(parseFull(metadata, scriptContent), AlefRegular, AlefBold)}
+                    >
+                        Export to PDF
                     </button>
                 </div>
                 <span style={{"fontSize":"0.875rem","lineHeight":"1.25rem","color":"#9CA3AF"}}>{metadata.title}</span>
