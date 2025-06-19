@@ -110,9 +110,10 @@ interface Props
     onSave?: () => void;
     AlefRegular: Uint8Array;
     AlefBold: Uint8Array;
+    setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
 }
 
-export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold }: Props): JSX.Element {
+export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold, setModeCallback }: Props): JSX.Element {
     const [fullText, setFullText] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
@@ -125,6 +126,11 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
     const [activeLine, setActiveLine] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Set initial mode and callback
+    useEffect(() => {
+        setModeCallback(setMode);
+    }, [setModeCallback]);
 
     // Parse text into metadata and content whenever fullText changes
     useEffect(() => {
