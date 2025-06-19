@@ -152,6 +152,40 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
         return () => document.removeEventListener("keydown", onKey, true);
     }, [fullText]);
 
+    // Move between modes on Ctrl+Q
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "q") {
+                e.preventDefault();
+                e.stopPropagation();
+                setMode((prevMode) => {
+                    if (prevMode === "preview") return "source";
+                    return "preview";
+                });
+            }
+        }
+
+        document.addEventListener("keydown", onKey, true);
+        return () => document.removeEventListener("keydown", onKey, true);
+    }, []);
+
+    // Move between metadata and preview modes on Ctrl+M
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "m") {
+                e.preventDefault();
+                e.stopPropagation();
+                setMode((prevMode) => {
+                    if (prevMode === "metadata") return "preview";
+                    return "metadata";
+                });
+            }
+        }
+
+        document.addEventListener("keydown", onKey, true);
+        return () => document.removeEventListener("keydown", onKey, true);
+    }, []);
+
     const saveFile = async () => {
         if (isSaving) return;
         
