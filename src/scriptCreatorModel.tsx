@@ -4,19 +4,20 @@ import { useState } from 'react';
 import * as ReactDOM from 'react-dom/client';
 
 type Props = {
-    onSubmit: (name: string, author: string, prodCompany: string, date: string) => void;
+    onSubmit: (name: string, subtitle: string, author: string, prodCompany: string, date: string) => void;
     onClose: () => void;
 };
 
 export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) => {
     const [name, setName] = useState("");
+    const [subtitle, setSubtitle] = useState(""); // Optional subtitle
     const [author, setAuthor] = useState("");
     const [prodCompany, setProdCompany] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today's date
 
     const handleSubmit = () => {
         if (name.trim()) {
-            onSubmit(name.trim(), author.trim(), prodCompany.trim(), date.trim());
+            onSubmit(name.trim(), subtitle.trim(), author.trim(), prodCompany.trim(), date.trim());
         }
     };
 
@@ -31,6 +32,14 @@ export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) =
                 placeholder="Enter script name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
+            <input
+                type="text"
+                style={{"padding":"0.5rem","marginBottom":"1rem","borderRadius":"0.25rem","borderWidth":"1px","width":"100%"}}
+                placeholder="Enter script subtitle (optional)"
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             />
             <input
@@ -74,9 +83,9 @@ export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) =
 class ScriptNameModal extends Modal 
 {
     private root: ReactDOM.Root;
-    onSubmit: (name: string, author: string, prodCompany: string, date: string) => void;
+    onSubmit: (name: string, subtitle: string, author: string, prodCompany: string, date: string) => void;
 
-    constructor(app: App, onSubmit: (name: string, author: string, prodCompany: string, date: string) => void) {
+    constructor(app: App, onSubmit: (name: string, subtitle: string, author: string, prodCompany: string, date: string) => void) {
         super(app);
         this.onSubmit = onSubmit;
     }
@@ -85,8 +94,8 @@ class ScriptNameModal extends Modal
         this.root = ReactDOM.createRoot(this.contentEl);
         this.root.render(
             <ScriptNameModalContent
-                onSubmit={(name: string, author: string, prodCompany: string, date: string) => {
-                    this.onSubmit(name, author, prodCompany, date);
+                onSubmit={(name: string, subtitle: string, author: string, prodCompany: string, date: string) => {
+                    this.onSubmit(name, subtitle, author, prodCompany, date);
                     this.close();
                 }}
                 onClose={() => this.close()}

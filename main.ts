@@ -14,12 +14,12 @@ export default class MyPlugin extends Plugin {
 			id: 'create-new-script',
 			name: 'Create New Script',
 			callback: async () => {
-				new ScriptNameModal(this.app, async (name, author, prodCompany, date) => {
+				new ScriptNameModal(this.app, async (name, subtitle, author, prodCompany, date) => {
 					const safeName = name.replace(/[\\/:*?"<>|]/g, '-');
 					const fileName = `${safeName}.script`;
 
 					try {
-						const file = await this.app.vault.create(fileName, `---\ntitle: ${name}\nauthor: ${author}\nprod_company: ${prodCompany}\ndate: ${date}\n---\n`);
+						const file = await this.app.vault.create(fileName, `---\ntitle: ${name}\nsubtitle: ${subtitle}\nauthor: ${author}\nprod_company: ${prodCompany}\ndate: ${date}\n---\n`);
 						const leaf = this.app.workspace.getLeaf(true);
 						await leaf.openFile(file);
 					} catch (err) {

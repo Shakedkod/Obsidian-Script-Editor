@@ -1,11 +1,11 @@
 import React from "react";
 import { Action, Character, Dialogue, SceneHeading, Subheader, Transition } from "./components/ScriptParts";
-import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { saveAs } from "file-saver";
 import fontkit from '@pdf-lib/fontkit';
 
 export type ScriptMetadata = {
     title: string;
+    subtitle?: string; // Optional subtitle
     author: string;
     prod_company: string;
     date: string;
@@ -51,6 +51,7 @@ function isScene(obj: any): obj is Scene {
 export default function parseFull(metadata: ScriptMetadata, content: string): Script {
     var result: Script = {
         title: metadata.title,
+        subtitle: metadata.subtitle, // Optional subtitle
         author: metadata.author,
         prod_company: metadata.prod_company,
         date: metadata.date,
@@ -141,149 +142,4 @@ export function scriptLineToReact(line: string, numberOfScenes: number = 1, setN
                 return <Action>{parsedLine.content}</Action>;
         }
     }
-}
-
-function isHebrew(text: string): boolean {
-    return /^[\u0590-\u05FF]/.test(text.trim());
-}
-
-export async function loadFont(): Promise<Uint8Array> {
-    const res = await fetch("../assets/Alef-Regular.ttf"); // adjust path if needed
-    return new Uint8Array(await res.arrayBuffer());
-}
-
-function drawWrappedText(page: PDFPage, font: PDFFont, text: string, x: number, y: number, maxWidth: number, fontSize: number, rtl: boolean = false) {
-    const words = text.split(' ');
-    const lines = [];
-    let current = '';
-
-    for (let word of words) {
-        const test = current + (current ? ' ' : '') + word;
-        const width = font.widthOfTextAtSize(test, fontSize);
-        if (width > maxWidth && current) {
-            lines.push(current);
-            current = word;
-        } else {
-            current = test;
-        }
-    }
-    if (current) lines.push(current);
-
-    for (const line of lines) {
-        page.drawText(line, {
-            x: rtl ? x + maxWidth - font.widthOfTextAtSize(line, fontSize) : x,
-            y,
-            font,
-            size: fontSize,
-            color: rgb(0, 0, 0),
-        });
-        y -= fontSize + 2;
-    }
-
-    return y;
-}
-
-export async function exportToPdf(script: Script, AlefRegular: Uint8Array, AlefBold: Uint8Array) {
-    const pdf = await PDFDocument.create();
-    pdf.registerFontkit(fontkit);
-
-    const regular = await pdf.embedFont(AlefRegular);
-    const bold = await pdf.embedFont(AlefBold);
-
-    const pageWidth = 612; // A4/US letter width
-    const pageHeight = 792;
-    const margin = 50;
-    const lineHeight = 16;
-
-    // 📄 Title Page
-    const titlePage = pdf.addPage([pageWidth, pageHeight]);
-    let y = pageHeight - 100;
-
-    titlePage.drawText(script.title, {
-        x: margin,
-        y,
-        size: 28,
-        font: bold,
-        color: rgb(0, 0, 0),
-    });
-    y -= 40;
-
-    const metaEntries = [
-        ['Author', script.author],
-        ['Production Company', script.prod_company],
-        ['Date', script.date]
-    ];
-
-    metaEntries.forEach(([label, value]) => {
-        titlePage.drawText(`${label}: ${value}`, {
-            x: margin,
-            y,
-            size: 16,
-            font: regular,
-            color: rgb(0.2, 0.2, 0.2),
-        });
-        y -= 24;
-    });
-
-    // 🎬 Script Pages
-    let page = pdf.addPage([pageWidth, pageHeight]);
-    y = pageHeight - margin;
-
-    const newPage = () => {
-        page = pdf.addPage([pageWidth, pageHeight]);
-        y = pageHeight - margin;
-    };
-
-    for (const scene of script.scenes) {
-        const lines = scene.elements; // assuming your parsed scene has a `content: ScriptLine[]` field
-
-        for (const line of lines) {
-            if (y < margin + lineHeight * 2) newPage();
-
-            let text = line.content.trim();
-            let font = regular;
-            let size = 12;
-            let indent = 0;
-            let rtl = isHebrew(text);
-
-            switch (line.type) {
-                case ScriptElementType.SceneHeading:
-                    font = bold;
-                    size = 14;
-                    text = text.toUpperCase();
-                    break;
-                case ScriptElementType.Character:
-                    font = bold;
-                    size = 12;
-                    indent = 200;
-                    break;
-                case ScriptElementType.Dialogue:
-                    size = 12;
-                    indent = 100;
-                    break;
-                case ScriptElementType.Transition:
-                    size = 12;
-                    indent = 300;
-                    break;
-                case ScriptElementType.Subheader:
-                    font = regular;
-                    size = 11;
-                    indent = 20;
-                    break;
-                case ScriptElementType.Action:
-                default:
-                    size = 12;
-                    indent = 0;
-            }
-
-            y = drawWrappedText(page, font, text, margin + indent, y, pageWidth - margin * 2 - indent, size, rtl);
-            y -= 6;
-        }
-
-        y -= 20; // spacing between scenes
-    }
-
-    const pdfBytes = await pdf.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    saveAs(blob, `${script.title}.pdf`);
 }

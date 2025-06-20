@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App } from "obsidian";
-import parseFull, { scriptLineToReact, parseLine, ScriptMetadata, exportToPdf } from "src/scriptParser";
+import { scriptLineToReact, parseLine, ScriptMetadata } from "src/scriptParser";
 
 function isScene(obj: any): obj is { id: number; heading: string; elements: any[] } {
     return obj && typeof obj === "object" && "id" in obj && "heading" in obj && "elements" in obj;
@@ -24,6 +24,7 @@ function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentW
         
         const metadata: ScriptMetadata = {
             title: "",
+            subtitle: "", // Optional subtitle
             author: "",
             prod_company: "",
             date: ""
@@ -45,6 +46,9 @@ function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentW
                 switch (key.toLowerCase()) {
                     case 'title':
                         metadata.title = value;
+                        break;
+                    case 'subtitle':
+                        metadata.subtitle = value; // Optional subtitle
                         break;
                     case 'author':
                         metadata.author = value;
@@ -91,6 +95,7 @@ function serializeFrontmatter(metadata: ScriptMetadata): string {
     };
     
     if (metadata.title) lines.push(`title: ${formatValue(metadata.title)}`);
+    if (metadata.subtitle) lines.push(`subtitle: ${formatValue(metadata.subtitle)}`); // Optional subtitle
     if (metadata.author) lines.push(`author: ${formatValue(metadata.author)}`);
     if (metadata.prod_company) lines.push(`prod_company: ${formatValue(metadata.prod_company)}`);
     if (metadata.date) lines.push(`date: ${formatValue(metadata.date)}`);
@@ -311,7 +316,15 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                     </button>
                     <button
                         style={{"paddingTop":"0.25rem","paddingBottom":"0.25rem","paddingLeft":"0.75rem","paddingRight":"0.75rem","borderRadius":"0.25rem","backgroundColor":"#F59E0B","color":"#ffffff","border":"none","cursor":"pointer"}}
-                        onClick={() => exportToPdf(parseFull(metadata, scriptContent), AlefRegular, AlefBold)}
+                        onClick={() => {
+                            // Export to PDF functionality
+                            //
+                            //
+                            //
+                            //
+                            //
+                            throw Error("Export to PDF functionality not implemented yet.");
+                        }}
                     >
                         Export to PDF
                     </button>
@@ -331,6 +344,17 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                             onChange={(e) => handleMetadataChange('title', e.target.value)}
                             style={{"width":"100%","padding":"0.5rem","backgroundColor":"#374151","color":"#ffffff","border":"1px solid #4B5563","borderRadius":"0.25rem","fontFamily":"inherit"}}
                             placeholder="Enter script title"
+                        />
+                    </div>
+
+                    <div style={{"marginBottom":"1rem"}}>
+                        <label style={{"display":"block","marginBottom":"0.5rem","color":"#D1D5DB","fontWeight":"bold"}}>Subtitle:</label>
+                        <input
+                            type="text"
+                            value={metadata.subtitle || ""}
+                            onChange={(e) => handleMetadataChange('subtitle', e.target.value)}
+                            style={{"width":"100%","padding":"0.5rem","backgroundColor":"#374151","color":"#ffffff","border":"1px solid #4B5563","borderRadius":"0.25rem","fontFamily":"inherit"}}
+                            placeholder="Enter script subtitle (optional)"
                         />
                     </div>
                     
@@ -392,7 +416,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                         >
                             {activeLine === i ? (
                                 <input
-                                    style={{"width":"100%","height":"1.5rem","lineHeight":"1.5rem","color":"#ffffff","backgroundColor":"transparent","border":"none","outline":"none","fontFamily":"inherit","fontSize":"inherit","padding":"0","margin":"0"}}
+                                    style={{"width":"100%","height":"1.5rem","lineHeight":"1.5rem","backgroundColor":"transparent","border":"none","outline":"none","fontFamily":"inherit","fontSize":"inherit","padding":"0","margin":"0"}}
                                     value={line}
                                     onChange={(e) => handleLineChange(i, e.target.value)}
                                     onBlur={() => setActiveLine(null)}

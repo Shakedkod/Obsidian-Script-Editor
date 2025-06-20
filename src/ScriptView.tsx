@@ -5,7 +5,6 @@ import React from "react";
 import { ScriptMetadata } from "./scriptParser";
 import * as fs from "fs";
 import path from "path";
-import { StandardFonts } from "pdf-lib";
 
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";

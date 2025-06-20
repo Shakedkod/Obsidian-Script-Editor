@@ -109,7 +109,7 @@ export function Subheader({ children }: { children: string }) {
             marginRight: isRtl ? '0.5em' : '0',
             direction: direction
         }}>
-            <strong>({children})</strong>
+            <strong>{children}</strong>
         </span>
     );
 }
@@ -160,7 +160,7 @@ export function SceneHeadingWithSubheader({ heading, subheader }: { heading: str
                         marginLeft: '0.5em',
                         direction: subheaderDirection
                     }}>
-                        <strong>({subheader})</strong>
+                        <strong>{subheader}</strong>
                     </span>
                 </>
             )}
