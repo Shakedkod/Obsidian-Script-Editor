@@ -6,7 +6,7 @@ import fontkit from '@pdf-lib/fontkit';
 export type ScriptMetadata = {
     title: string;
     subtitle?: string; // Optional subtitle
-    author: string;
+    writers: string;
     prod_company: string;
     date: string;
 };
@@ -52,7 +52,7 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
     var result: Script = {
         title: metadata.title,
         subtitle: metadata.subtitle, // Optional subtitle
-        author: metadata.author,
+        writers: metadata.writers,
         prod_company: metadata.prod_company,
         date: metadata.date,
         scenes: []

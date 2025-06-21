@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import parseFull, { ScriptMetadata } from "./scriptParser";
 import * as fs from "fs";
 import path from "path";
+import { createPDF } from "./pdf";
 
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";
@@ -139,9 +140,12 @@ export class ScriptView extends TextFileView {
             return;
         }
 
+        const AlefRegular = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf"));
+        const AlefBold = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf"));
+
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
-        console.log("Parsed Script:", parsedScript);
+        createPDF(AlefRegular, AlefBold, parsedScript);
     };
 
     async onUnloadFile(file: TFile): Promise<void> {
@@ -192,7 +196,7 @@ export class ScriptView extends TextFileView {
             const metadataLines = metadataMatch[1].split('\n').filter(line => line.trim() !== '');
             const metadata: ScriptMetadata = {
                 title: "",
-                author: "",
+                writers: "",
                 prod_company: "",
                 date: ""
             }
@@ -204,7 +208,7 @@ export class ScriptView extends TextFileView {
                             metadata.title = value;
                             break;
                         case 'author':
-                            metadata.author = value;
+                            metadata.writers = value;
                             break;
                         case 'prod_company':
                             metadata.prod_company = value;

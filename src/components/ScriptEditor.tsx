@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App } from "obsidian";
-import { scriptLineToReact, parseLine, ScriptMetadata } from "src/scriptParser";
+import parseFull, { scriptLineToReact, parseLine, ScriptMetadata } from "src/scriptParser";
+import { createPDF } from "src/pdf";
 
 function isScene(obj: any): obj is { id: number; heading: string; elements: any[] } {
     return obj && typeof obj === "object" && "id" in obj && "heading" in obj && "elements" in obj;
@@ -25,7 +26,7 @@ function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentW
         const metadata: ScriptMetadata = {
             title: "",
             subtitle: "", // Optional subtitle
-            author: "",
+            writers: "",
             prod_company: "",
             date: ""
         };
@@ -51,7 +52,7 @@ function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentW
                         metadata.subtitle = value; // Optional subtitle
                         break;
                     case 'author':
-                        metadata.author = value;
+                        metadata.writers = value;
                         break;
                     case 'prod_company':
                         metadata.prod_company = value;
@@ -69,7 +70,7 @@ function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentW
         return {
             metadata: {
                 title: "",
-                author: "",
+                writers: "",
                 prod_company: "",
                 date: ""
             },
@@ -96,7 +97,7 @@ function serializeFrontmatter(metadata: ScriptMetadata): string {
     
     if (metadata.title) lines.push(`title: ${formatValue(metadata.title)}`);
     if (metadata.subtitle) lines.push(`subtitle: ${formatValue(metadata.subtitle)}`); // Optional subtitle
-    if (metadata.author) lines.push(`author: ${formatValue(metadata.author)}`);
+    if (metadata.writers) lines.push(`author: ${formatValue(metadata.writers)}`);
     if (metadata.prod_company) lines.push(`prod_company: ${formatValue(metadata.prod_company)}`);
     if (metadata.date) lines.push(`date: ${formatValue(metadata.date)}`);
     
@@ -122,7 +123,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
     const [fullText, setFullText] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
-        author: "",
+        writers: "",
         prod_company: "",
         date: ""
     });
@@ -269,13 +270,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                     <button
                         style={{"paddingTop":"0.25rem","paddingBottom":"0.25rem","paddingLeft":"0.75rem","paddingRight":"0.75rem","borderRadius":"0.25rem","backgroundColor":"#F59E0B","color":"#ffffff","border":"none","cursor":"pointer"}}
                         onClick={() => {
-                            // Export to PDF functionality
-                            //
-                            //
-                            //
-                            //
-                            //
-                            throw Error("Export to PDF functionality not implemented yet.");
+                            createPDF(AlefRegular, AlefBold, parseFull(metadata, scriptContent));
                         }}
                     >
                         Export to PDF
@@ -311,11 +306,11 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                     </div>
                     
                     <div style={{"marginBottom":"1rem"}}>
-                        <label style={{"display":"block","marginBottom":"0.5rem","color":"#D1D5DB","fontWeight":"bold"}}>Author:</label>
+                        <label style={{"display":"block","marginBottom":"0.5rem","color":"#D1D5DB","fontWeight":"bold"}}>Writers:</label>
                         <input
                             type="text"
-                            value={metadata.author}
-                            onChange={(e) => handleMetadataChange('author', e.target.value)}
+                            value={metadata.writers}
+                            onChange={(e) => handleMetadataChange('writers', e.target.value)}
                             style={{"width":"100%","padding":"0.5rem","backgroundColor":"#374151","color":"#ffffff","border":"1px solid #4B5563","borderRadius":"0.25rem","fontFamily":"inherit"}}
                             placeholder="Enter author name"
                         />
@@ -335,10 +330,10 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                     <div style={{"marginBottom":"1rem"}}>
                         <label style={{"display":"block","marginBottom":"0.5rem","color":"#D1D5DB","fontWeight":"bold"}}>Date:</label>
                         <input
-                            type="text"
+                            type="date"
                             value={metadata.date}
                             onChange={(e) => handleMetadataChange('date', e.target.value)}
-                            style={{"width":"100%","padding":"0.5rem","backgroundColor":"#374151","color":"#ffffff","border":"1px solid #4B5563","borderRadius":"0.25rem","fontFamily":"inherit"}}
+                            style={{"width":"100%","padding":"0.5rem","paddingLeft":"1.5rem","backgroundColor":"#374151","color":"#ffffff","border":"1px solid #4B5563","borderRadius":"0.25rem","fontFamily":"inherit"}}
                             placeholder="Enter date (e.g., 2024-01-15)"
                         />
                     </div>
