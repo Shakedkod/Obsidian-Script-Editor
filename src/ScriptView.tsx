@@ -1,8 +1,8 @@
 import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { ScriptEditor } from "./components/ScriptEditor";
-import React from "react";
-import { ScriptMetadata } from "./scriptParser";
+import React, { useState } from "react";
+import parseFull, { ScriptMetadata } from "./scriptParser";
 import * as fs from "fs";
 import path from "path";
 
@@ -13,7 +13,7 @@ export class ScriptView extends TextFileView {
     root: Root | null = null;
     data: string = DEFAULT_DATA;
     private hasUnsavedChanges: boolean = false;
-    private switchMode: (mode: "preview" | "source" | "metadata") => void = () => { };
+    public setMode: (mode: "preview" | "source" | "metadata") => void = () => {};
 
     constructor(leaf: WorkspaceLeaf) {
         super(leaf);
@@ -60,7 +60,7 @@ export class ScriptView extends TextFileView {
             item.setTitle("Switch To Preview Mode");
             item.setIcon("switch");
             item.onClick(() => {
-                this.switchMode("preview");
+                this.setMode("preview");
             });
         });
 
@@ -68,7 +68,7 @@ export class ScriptView extends TextFileView {
             item.setTitle("Switch To Source Mode");
             item.setIcon("code");
             item.onClick(() => {
-                this.switchMode("source");
+                this.setMode("source");
             });
         });
 
@@ -76,7 +76,7 @@ export class ScriptView extends TextFileView {
             item.setTitle("Edit Metadata");
             item.setIcon("info");
             item.onClick(() => {
-                this.switchMode("metadata");
+                this.setMode("metadata");
             });
         });
         menu.addSeparator();
@@ -93,17 +93,17 @@ export class ScriptView extends TextFileView {
         // Add button to switch modes
         // Add Preview Mode menu action
         this.addAction("Preview Mode", "eye", async () => {
-            this.switchMode("preview");
+            this.setMode("preview");
         });
 
         // Add Source Mode menu action
         this.addAction("Source Mode", "code", async () => {
-            this.switchMode("source");
+            this.setMode("source");
         });
 
         // Add Metadata Mode menu action
         this.addAction("Metadata Mode", "info", async () => {
-            this.switchMode("metadata");
+            this.setMode("metadata");
         });
 
         // Load the Alef font files
@@ -122,10 +122,27 @@ export class ScriptView extends TextFileView {
                 onSave={() => this.hasUnsavedChanges = false}
                 AlefRegular={AlefRegular}
                 AlefBold={AlefBold}
-                setModeCallback={(cb) => this.switchMode = cb}
+                setModeCallback={(cb) => this.setMode = cb}
             />
         );
     }
+
+    async exportToPDF(): Promise<void> 
+    {
+        if (!this.file) {
+            console.error("No file to export.");
+            return;
+        }
+        const scriptMetadata = await this.getScriptMetadata(this.file);
+        if (!scriptMetadata) {
+            console.warn("No metadata found for script:", this.file.path);
+            return;
+        }
+
+        const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
+        const parsedScript = parseFull(scriptMetadata, scriptContent);
+        console.log("Parsed Script:", parsedScript);
+    };
 
     async onUnloadFile(file: TFile): Promise<void> {
         // Save before unloading if there are unsaved changes

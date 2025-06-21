@@ -3,6 +3,8 @@ import { ScriptView, SCRIPT_VIEW_TYPE } from "./src/ScriptView";
 import { ScriptNameModal } from "./src/scriptCreatorModel";
 
 export default class MyPlugin extends Plugin {
+	private scriptMode: "preview" | "source" | "metadata" = "preview";
+
 	async onload() {
 		this.registerView(
 			SCRIPT_VIEW_TYPE,
@@ -27,6 +29,69 @@ export default class MyPlugin extends Plugin {
 					}
 				}).open();
 			}
+		});
+
+		this.addCommand({
+			id: "toggle-preview-mode",
+			name: "Toggle Preview Mode",
+			callback: () => {
+				// call a method to toggle view mode
+				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
+				if (activeLeaf) {
+					this.scriptMode = this.scriptMode === "preview" ? "source" : "preview";
+					activeLeaf.setMode(this.scriptMode);
+				}
+			},
+			hotkeys: [
+				{
+					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
+					key: "q",
+				},
+			],
+		});
+
+		this.addCommand({
+			id: "edit-script-metadata",
+			name: "Edit Script Metadata",
+			callback: () => {
+				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
+				if (activeLeaf) {
+					this.scriptMode = this.scriptMode === "metadata" ? "preview" : "metadata";
+					activeLeaf.setMode(this.scriptMode);
+				} else {
+					new Notice("No script view is currently active.");
+				}
+			},
+			hotkeys: [
+				{
+					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
+					key: "m",
+				},
+			],
+		});
+
+		this.addCommand({
+			id: "export-script-to-pdf",
+			name: "Export Script to PDF",
+			callback: async () => {
+				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
+				if (activeLeaf) {
+					try {
+						await activeLeaf.exportToPDF();
+						new Notice("Script exported to PDF successfully.");
+					} catch (error) {
+						new Notice("Failed to export script: " + error.message);
+					}
+				} else {
+					new Notice("No script view is currently active.");
+				}
+			},
+			hotkeys: [
+				{
+					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
+					key: "p",
+				},
+			],
 		});
 
 		// Automatically open the script view for .script files
