@@ -20,10 +20,15 @@ export enum ScriptElementType {
     Subheader
 }
 
+export type ScriptElement = {
+    type: ScriptElementType;
+    content: string;
+};
+
 export type Scene = {
     id: number;
     heading: string;
-    elements: ({ type: ScriptElementType; content: string })[];
+    elements: ScriptElement[];
 };
 
 export type Script = ScriptMetadata & {
