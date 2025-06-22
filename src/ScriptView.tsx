@@ -147,8 +147,8 @@ export class ScriptView extends TextFileView {
             <ScriptEditor
                 file={file}
                 app={this.app}
+                characterFolder={this.plugin.settings.characterFolder}
                 setData={(data: string) => this.setViewData(data)}
-                onSave={() => this.hasUnsavedChanges = false}
                 AlefRegular={AlefRegular}
                 AlefBold={AlefBold}
                 setModeCallback={(cb) => {

@@ -9,6 +9,7 @@ export type ScriptMetadata = {
     writers: string;
     prod_company: string;
     date: string;
+    characterFolder?: string; // Optional folder for character notes
 };
 
 export enum ScriptElementType {
@@ -162,6 +163,9 @@ export function parseFrontmatter(content: string): { metadata: ScriptMetadata; c
                     case 'date':
                         metadata.date = value;
                         break;
+                    case 'characterFolder':
+                        metadata.characterFolder = value; // Optional folder for character notes
+                        break;
                 }
             }
         }
@@ -202,6 +206,7 @@ export function serializeFrontmatter(metadata: ScriptMetadata): string {
     if (metadata.writers) lines.push(`author: ${formatValue(metadata.writers)}`);
     if (metadata.prod_company) lines.push(`prod_company: ${formatValue(metadata.prod_company)}`);
     if (metadata.date) lines.push(`date: ${formatValue(metadata.date)}`);
+    if (metadata.characterFolder) lines.push(`characterFolder: ${formatValue(metadata.characterFolder)}`); // Optional folder for character notes
     
     if (lines.length === 0) {
         return '';

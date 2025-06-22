@@ -1,5 +1,5 @@
 import ScriptEditorPlugin from "main";
-import { App, PluginSettingTab, Setting, TextComponent, TFolder } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 
 export interface ScriptEditorSettings {
     characterFolder: string;
@@ -8,30 +8,6 @@ export interface ScriptEditorSettings {
 export const DEFAULT_SETTINGS: Partial<ScriptEditorSettings> = {
     characterFolder: "Characters"
 };
-
-export class FolderSuggest {
-    constructor(app: App, input: TextComponent) {
-        const vault = app.vault;
-
-        // Bind Obsidian's fuzzy suggest
-        // @ts-ignore (internal API)
-        const suggest = app.plugins.plugins["nldates-obsidian"]?.suggest || app.scope?.suggest;
-
-        if (suggest) {
-            suggest(input.inputEl, async (query: string) => {
-                return vault.getAllLoadedFiles()
-                    .filter((file) => file instanceof TFolder && file.path.toLowerCase().includes(query.toLowerCase()))
-                    .map((folder: TFolder) => ({
-                        item: folder.path,
-                        title: folder.path,
-                    }));
-            }, async (item: string) => {
-                input.setValue(item);
-                input.inputEl.trigger("input");
-            });
-        }
-    }
-}
 
 export default class ScriptEditorSettingsTab extends PluginSettingTab {
     plugin: ScriptEditorPlugin;
@@ -58,9 +34,6 @@ export default class ScriptEditorSettingsTab extends PluginSettingTab {
                         this.plugin.settings.characterFolder = value.trim();
                         await this.plugin.saveSettings();
                     });
-
-                // Add folder suggest
-                new FolderSuggest(this.app, text);
             });
     }
 }

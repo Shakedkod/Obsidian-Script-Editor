@@ -22,12 +22,12 @@ export default class ScriptEditorPlugin extends Plugin {
 			id: 'create-new-script',
 			name: 'Create New Script',
 			callback: async () => {
-				new ScriptNameModal(this.app, async (name, subtitle, writers, prodCompany, date) => {
+				new ScriptNameModal(this.app, async (name, subtitle, writers, prodCompany, date, characterFolder) => {
 					const safeName = name.replace(/[\\/:*?"<>|]/g, '-');
 					const fileName = `${safeName}.script`;
 
 					try {
-						const file = await this.app.vault.create(fileName, `---\ntitle: ${name}\nsubtitle: ${subtitle}\nwriters: ${writers}\nprod_company: ${prodCompany}\ndate: ${date}\n---\n`);
+						const file = await this.app.vault.create(fileName, `---\ntitle: ${name}\nsubtitle: ${subtitle}\nwriters: ${writers}\nprod_company: ${prodCompany}\ndate: ${date}\ncharacterFolder: ${characterFolder}\n---\n`);
 						const leaf = this.app.workspace.getLeaf(true);
 						await leaf.openFile(file);
 					} catch (err) {

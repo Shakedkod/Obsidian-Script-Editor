@@ -4,7 +4,7 @@ import { useState } from 'react';
 import * as ReactDOM from 'react-dom/client';
 
 type Props = {
-    onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string) => void;
+    onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string, characterFolder: string) => void;
     onClose: () => void;
 };
 
@@ -14,10 +14,11 @@ export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) =
     const [writers, setWriters] = useState("");
     const [prodCompany, setProdCompany] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today's date
+    const [characterFolder, setCharacterFolder] = useState(""); // Placeholder for character folder
 
     const handleSubmit = () => {
         if (name.trim()) {
-            onSubmit(name.trim(), subtitle.trim(), writers.trim(), prodCompany.trim(), date.trim());
+            onSubmit(name.trim(), subtitle.trim(), writers.trim(), prodCompany.trim(), date.trim(), characterFolder.trim());
         }
     };
 
@@ -65,6 +66,14 @@ export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) =
                 onChange={(e) => setDate(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             />
+            <input
+                type="text"
+                style={{"padding":"0.5rem","marginBottom":"1rem","borderRadius":"0.25rem","borderWidth":"1px","width":"100%"}}
+                placeholder="Enter character folder"
+                value={characterFolder} // Placeholder for character folder, if needed
+                onChange={(e) => setCharacterFolder(e.target.value)} // No action needed for character folder input
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
             <div style={{"display":"flex","justifyContent":"center","gap":"0.5rem"}}>
                 <button
                     onClick={handleSubmit}
@@ -83,9 +92,9 @@ export const ScriptNameModalContent: React.FC<Props> = ({ onSubmit, onClose }) =
 class ScriptNameModal extends Modal 
 {
     private root: ReactDOM.Root;
-    onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string) => void;
+    onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string, characterFolder: string) => void;
 
-    constructor(app: App, onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string) => void) {
+    constructor(app: App, onSubmit: (name: string, subtitle: string, writers: string, prodCompany: string, date: string, characterFolder: string) => void) {
         super(app);
         this.onSubmit = onSubmit;
     }
@@ -94,8 +103,8 @@ class ScriptNameModal extends Modal
         this.root = ReactDOM.createRoot(this.contentEl);
         this.root.render(
             <ScriptNameModalContent
-                onSubmit={(name: string, subtitle: string, writers: string, prodCompany: string, date: string) => {
-                    this.onSubmit(name, subtitle, writers, prodCompany, date);
+                onSubmit={(name: string, subtitle: string, writers: string, prodCompany: string, date: string, characterFolder: string) => {
+                    this.onSubmit(name, subtitle, writers, prodCompany, date, characterFolder);
                     this.close();
                 }}
                 onClose={() => this.close()}
