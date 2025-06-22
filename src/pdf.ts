@@ -7,6 +7,7 @@ import { Scene, Script, ScriptElement, ScriptElementType } from './scriptParser'
 const LETTER_WIDTH = 612.4; // 8.5 inches in points
 const LETTER_HEIGHT = 791; // 11 inches in points
 const ONE_INCH = 72; // 1 inch in points
+const LINE_SPACING = 18; // Default line spacing in points
 const TITLE_FONT_SIZE = 36;
 const SUBTITLE_FONT_SIZE = 14;
 const DEFAULT_FONT_SIZE = 12;
@@ -70,6 +71,176 @@ function createSubtitle(page: any, font: any, fontSize: number, headText: string
     });
 }
 
+interface ReturnArgs {
+    y: number;
+    pageBreak: boolean;
+    nextPageContent?: string;
+}
+
+function isHebrew(text: string): boolean {
+    return /[\u0590-\u05FF]/.test(text);
+}
+
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let current = '';
+
+    for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        const width = font.widthOfTextAtSize(test, size);
+
+        if (width <= maxWidth)
+            current = test;
+        else {
+            if (current) lines.push(current);
+            current = word; // Start a new line with the current word
+        }
+    }
+
+    if (current) lines.push(current); // Add the last line if it exists
+    return lines;
+}
+
+function fixParenthesesInRTL(text: string): string {
+    const isRTL = /[\u0590-\u05FF]/.test(text);
+    if (!isRTL) return text;
+
+    // Swap only the surrounding parentheses
+    return text.replace(/\(([^)]+)\)/g, (_match, inner) => `)${inner}(`);
+}
+
+function renderAction(content: string, page: PDFPage, y: number, font: PDFFont, pageWidth: number = LETTER_WIDTH): ReturnArgs {
+    const maxWith = pageWidth - 2 * ONE_INCH; // Leave margins
+    const maxLinesPerPage = Math.floor((y - ONE_INCH) / LINE_SPACING);
+
+    const lines = wrapText(content, font, DEFAULT_FONT_SIZE, maxWith);
+
+    if (lines.length <= maxLinesPerPage) {
+        for (const line of lines) {
+            const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
+            page.drawText(line, {
+                x: isHebrew(line) ? pageWidth - ONE_INCH - textWidth : ONE_INCH,
+                y,
+                font,
+                size: DEFAULT_FONT_SIZE,
+                color: rgb(0, 0, 0),
+            });
+            y -= LINE_SPACING; // Move down for the next line
+        }
+
+        return { y, pageBreak: false };
+    }
+
+    const fittingLines = lines.slice(0, maxLinesPerPage);
+    const remainingLines = lines.slice(maxLinesPerPage);
+
+    for (const line of fittingLines) {
+        const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
+        page.drawText(line, {
+            x: isHebrew(line) ? pageWidth - ONE_INCH - textWidth : ONE_INCH,
+            y,
+            font,
+            size: DEFAULT_FONT_SIZE,
+            color: rgb(0, 0, 0),
+        });
+        y -= LINE_SPACING; // Move down for the next line
+    }
+
+    return {
+        y,
+        pageBreak: true,
+        nextPageContent: remainingLines.join(' ')
+    };
+}
+
+function renderCharacter(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
+    const name = content.trim().toUpperCase();
+    const textWidth = font.widthOfTextAtSize(name, DEFAULT_FONT_SIZE);
+    const x = (LETTER_WIDTH - textWidth) / 2;
+
+    page.drawText(name, {
+        x,
+        y,
+        size: DEFAULT_FONT_SIZE,
+        font,
+        color: rgb(0, 0, 0),
+    });
+
+    return { y: y - LINE_SPACING, pageBreak: false };
+}
+
+function renderDialogue(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
+    const blockWidth = 200; // Width of the dialogue box
+    const maxLines = Math.floor((y - ONE_INCH) / LINE_SPACING);
+    const isRTL = isHebrew(content);
+
+    const lines = wrapText(content, font, DEFAULT_FONT_SIZE, blockWidth);
+
+    if (lines.length <= maxLines) {
+        for (const line of lines) {
+            const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
+            const x = isRTL
+                ? (LETTER_WIDTH + blockWidth) / 2 - textWidth // right-aligned inside block
+                : (LETTER_WIDTH - blockWidth) / 2;
+            page.drawText(line, { x, y, size: DEFAULT_FONT_SIZE, font, color: rgb(0, 0, 0) });
+            y -= LINE_SPACING;
+        }
+        return { y, pageBreak: false };
+    }
+
+    const fitting = lines.slice(0, maxLines);
+    const remaining = lines.slice(maxLines);
+
+    for (const line of fitting) {
+        const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
+        const x = isRTL
+            ? (LETTER_WIDTH + blockWidth) / 2 - textWidth // right-aligned inside block
+            : (LETTER_WIDTH - blockWidth) / 2;
+        page.drawText(line, { x, y, size: DEFAULT_FONT_SIZE, font, color: rgb(0, 0, 0) });
+        y -= LINE_SPACING;
+    }
+
+    return {
+        y,
+        pageBreak: true,
+        nextPageContent: remaining.join(' ')
+    };
+}
+
+function renderTransition(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
+    const text = content.toUpperCase();
+    const textWidth = font.widthOfTextAtSize(text, DEFAULT_FONT_SIZE);
+    const x = isHebrew(text) ? LETTER_WIDTH - ONE_INCH - textWidth : ONE_INCH;
+
+    page.drawText(text, {
+        x,
+        y,
+        font,
+        size: DEFAULT_FONT_SIZE,
+        color: rgb(0, 0, 0),
+    });
+
+    return { y: y - LINE_SPACING, pageBreak: false };
+}
+
+function renderSubheader(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
+    const isRTL = isHebrew(content);
+    const safeContent = isRTL ? fixParenthesesInRTL(content.toUpperCase()) : content.toUpperCase();
+    const textWidth = font.widthOfTextAtSize(safeContent, DEFAULT_FONT_SIZE);
+    const x = isRTL ? LETTER_WIDTH - ONE_INCH - textWidth : ONE_INCH;
+
+    page.drawText(safeContent, {
+        x,
+        y,
+        font,
+        size: DEFAULT_FONT_SIZE,
+        color: rgb(0, 0, 0),
+    });
+
+    return { y: y - LINE_SPACING, pageBreak: false };
+}
+
 function renderElement(element: ScriptElement, page: PDFPage, y: number, fontRegular: PDFFont, fontBold: PDFFont): { y: number, pageBreak: boolean, nextPageContent?: string } {
     switch (element.type) {
         case ScriptElementType.Action:
@@ -88,18 +259,16 @@ function renderElement(element: ScriptElement, page: PDFPage, y: number, fontReg
 }
 
 function renderSceneHeading(
-    heading: string, 
-    page: PDFPage, 
-    y: number, 
+    heading: string,
+    page: PDFPage,
+    y: number,
     fontBold: PDFFont,
     sceneNumber: number = 0,
     pageWidth: number = LETTER_WIDTH
-): number
-{
-    const spacing = 24;
+): number {
     const isHebrew = /[\u0590-\u05FF]/.test(heading);
     const numberText = `${sceneNumber}`;
-    const fullText = isHebrew ? `${heading}\t${numberText}` : `${numberText}\t${heading}`;
+    const fullText = `${numberText}\t${heading}`;
     const upperText = fullText.toUpperCase();
 
     const textWidth = fontBold.widthOfTextAtSize(upperText, DEFAULT_FONT_SIZE);
@@ -113,11 +282,10 @@ function renderSceneHeading(
         color: rgb(0, 0, 0),
     });
 
-    return y - spacing; // Return the updated Y position after rendering the scene heading
+    return y - LINE_SPACING; // Return the updated Y position after rendering the scene heading
 }
 
-function renderScene(scene: Scene, doc: PDFDocument, y: number, fontRegular: PDFFont, fontBold: PDFFont): { page: PDFPage, y: number } 
-{
+function renderScene(scene: Scene, doc: PDFDocument, y: number, fontRegular: PDFFont, fontBold: PDFFont): { page: PDFPage, y: number } {
     let page = doc.getPage(doc.getPageCount() - 1); // Get the last page
     const checkPageBreak = (y: number): boolean => y < ONE_INCH;
 
@@ -133,27 +301,21 @@ function renderScene(scene: Scene, doc: PDFDocument, y: number, fontRegular: PDF
 
     y = renderSceneHeading(scene.heading, page, y, fontBold, scene.id);
 
-    var result: { y: number, pageBreak: boolean, nextPageContent?: string } = { y, pageBreak: false, nextPageContent: undefined };
-    for (const element of scene.elements) 
-    {
-        
-        result = renderElement(element, page, y, fontRegular, fontBold);
-        y = result.y;
+    for (const element of scene.elements) {
+        let content = element.content;
+        let result: { y: number; pageBreak: boolean; nextPageContent?: string };
 
-        while (result.pageBreak)
-        {
-            element.content = result.nextPageContent || "";
-            addNewPage();
-            
-            if (result.nextPageContent)
-            {
-                result = renderElement(element, page, y, fontRegular, fontBold);
-                y = result.y;
+        do {
+            result = renderElement({ ...element, content }, page, y, fontRegular, fontBold);
+            y = result.y;
+
+            if (result.pageBreak) {
+                addNewPage();
+                content = result.nextPageContent || "";
             }
-        }
+        } while (result.pageBreak);
 
-        if (checkPageBreak(y))
-            addNewPage();
+        if (checkPageBreak(y)) addNewPage();
     }
 
     return { page, y };

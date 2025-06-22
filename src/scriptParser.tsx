@@ -88,6 +88,10 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
         }
     }
 
+    if (currentScene) {
+        currentScene.id = sceneId;
+        result.scenes.push(currentScene);
+    }
     return result;
 }
 
