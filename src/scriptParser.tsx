@@ -1,7 +1,5 @@
 import React from "react";
 import { Action, Character, Dialogue, SceneHeading, Subheader, Transition } from "./components/ScriptParts";
-import { saveAs } from "file-saver";
-import fontkit from '@pdf-lib/fontkit';
 
 export type ScriptMetadata = {
     title: string;
@@ -131,7 +129,8 @@ export function parseFrontmatter(content: string): { metadata: ScriptMetadata; c
             subtitle: "", // Optional subtitle
             writers: "",
             prod_company: "",
-            date: ""
+            date: "",
+            characterFolder: "" // Optional folder for character notes
         };
         
         const lines = frontmatterContent.split(/\r?\n/);
@@ -163,7 +162,7 @@ export function parseFrontmatter(content: string): { metadata: ScriptMetadata; c
                     case 'date':
                         metadata.date = value;
                         break;
-                    case 'characterFolder':
+                    case 'characterfolder':
                         metadata.characterFolder = value; // Optional folder for character notes
                         break;
                 }
@@ -178,7 +177,8 @@ export function parseFrontmatter(content: string): { metadata: ScriptMetadata; c
                 title: "",
                 writers: "",
                 prod_company: "",
-                date: ""
+                date: "",
+                characterFolder: "" // Optional folder for character notes
             },
             contentWithoutFrontmatter: content
         };
