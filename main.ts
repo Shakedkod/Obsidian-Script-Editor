@@ -1,14 +1,20 @@
-import { Notice, Plugin } from 'obsidian';
+import { getLanguage, Notice, Plugin } from 'obsidian';
 import { ScriptView, SCRIPT_VIEW_TYPE } from "./src/ScriptView";
 import { ScriptNameModal } from "./src/scriptCreatorModel";
+import ScriptEditorSettingsTab, { DEFAULT_SETTINGS, ScriptEditorSettings } from 'src/scriptEditorSettings';
+import { i18n } from 'src/i18n/i18n';
 
-export default class MyPlugin extends Plugin {
+export default class ScriptEditorPlugin extends Plugin {
 	private scriptMode: "preview" | "source" | "metadata" = "preview";
+	settings: ScriptEditorSettings;
 
 	async onload() {
+		await this.loadSettings();
+		i18n.setLanguageFromString(getLanguage());
+
 		this.registerView(
 			SCRIPT_VIEW_TYPE,
-			(leaf) => new ScriptView(leaf)
+			(leaf) => new ScriptView(leaf, this)
 		);
 
 		// Add a command to create a new script file
@@ -96,6 +102,17 @@ export default class MyPlugin extends Plugin {
 
 		// Automatically open the script view for .script files
 		this.registerExtensions(["script"], SCRIPT_VIEW_TYPE);
+
+		// Settings
+		this.addSettingTab(new ScriptEditorSettingsTab(this.app, this));
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 
 	onunload() {

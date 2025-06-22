@@ -1,12 +1,7 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App } from "obsidian";
-import parseFull, { scriptLineToReact, parseLine, ScriptMetadata, parseFrontmatter, serializeFrontmatter, isScene } from "src/scriptParser";
-import { createPDF } from "src/pdf";
-
-function isRTL(text: string): boolean {
-    const rtlRegex = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    return rtlRegex.test(text);
-}
+import { scriptLineToReact, parseLine, ScriptMetadata, parseFrontmatter, serializeFrontmatter, isScene } from "src/scriptParser";
+import { i18n, isRTL } from "src/i18n/i18n";
 
 function getTextDirection(text: string): 'rtl' | 'ltr' {
     return isRTL(text) ? 'rtl' : 'ltr';
@@ -20,9 +15,10 @@ interface Props {
     AlefRegular: Uint8Array;
     AlefBold: Uint8Array;
     setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
+    openCharacterNote: (name: string) => void;
 }
 
-export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold, setModeCallback }: Props): JSX.Element {
+export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold, setModeCallback, openCharacterNote }: Props): JSX.Element {
     const [fullText, setFullText] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
@@ -52,22 +48,6 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
     useEffect(() => {
         app.vault.read(file).then(setFullText);
     }, [file]);
-
-    const saveFile = async () => {
-        if (isSaving) return;
-
-        try {
-            setIsSaving(true);
-            await app.vault.modify(file, fullText);
-            setData(fullText);
-            onSave?.();
-            console.log("💾 Saved");
-        } catch (error) {
-            console.error("Failed to save file:", error);
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     // Update full text when metadata or script content changes
     const updateFullText = (newMetadata: ScriptMetadata, newScriptContent: string) => {
@@ -130,7 +110,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                 </div>
             );
         } else {
-            return scriptLineToReact(line, 0, () => { });
+            return scriptLineToReact(line, 0, () => { }, openCharacterNote);
         }
     };
 
@@ -150,45 +130,19 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
 
     return (
         <div style={{ "padding": "1rem", "width": "100%", "height": "100%", "fontFamily": "Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" }}>
-            <div style={{ "display": "flex", "marginBottom": "1rem", "justifyContent": "space-between", "flexWrap": "wrap", "gap": "0.5rem" }}>
-                <div style={{ "display": "flex", "gap": "0.5rem", "flexWrap": "wrap" }}>
-                    <button
-                        style={{ "paddingTop": "0.25rem", "paddingBottom": "0.25rem", "paddingLeft": "0.75rem", "paddingRight": "0.75rem", "borderRadius": "0.25rem", "backgroundColor": mode === "preview" ? "#2563EB" : "#374151", "color": "#ffffff", "border": "none", "cursor": "pointer" }}
-                        onClick={() => setMode("preview")}
-                    >
-                        Preview
-                    </button>
-                    <button
-                        style={{ "paddingTop": "0.25rem", "paddingBottom": "0.25rem", "paddingLeft": "0.75rem", "paddingRight": "0.75rem", "borderRadius": "0.25rem", "backgroundColor": mode === "source" ? "#2563EB" : "#374151", "color": "#ffffff", "border": "none", "cursor": "pointer" }}
-                        onClick={() => setMode("source")}
-                    >
-                        Source
-                    </button>
-                    <button
-                        style={{ "paddingTop": "0.25rem", "paddingBottom": "0.25rem", "paddingLeft": "0.75rem", "paddingRight": "0.75rem", "borderRadius": "0.25rem", "backgroundColor": mode === "metadata" ? "#2563EB" : "#374151", "color": "#ffffff", "border": "none", "cursor": "pointer" }}
-                        onClick={() => setMode("metadata")}
-                    >
-                        Metadata
-                    </button>
-                    <button
-                        style={{ "paddingTop": "0.25rem", "paddingBottom": "0.25rem", "paddingLeft": "0.75rem", "paddingRight": "0.75rem", "borderRadius": "0.25rem", "backgroundColor": isSaving ? "#1D4ED8" : "#10B981", "color": "#ffffff", "border": "none", "cursor": isSaving ? "not-allowed" : "pointer" }}
-                        onClick={saveFile}
-                        disabled={isSaving}
-                    >
-                        {isSaving ? "Saving..." : "Save (Ctrl+S)"}
-                    </button>
-                    <button
-                        style={{ "paddingTop": "0.25rem", "paddingBottom": "0.25rem", "paddingLeft": "0.75rem", "paddingRight": "0.75rem", "borderRadius": "0.25rem", "backgroundColor": "#F59E0B", "color": "#ffffff", "border": "none", "cursor": "pointer" }}
-                        onClick={() => {
-                            createPDF(AlefRegular, AlefBold, parseFull(metadata, scriptContent));
-                        }}
-                    >
-                        Export to PDF
-                    </button>
-                </div>
-                <span style={{ "fontSize": "0.875rem", "lineHeight": "1.25rem", "color": "#9CA3AF" }}>{metadata.title}</span>
+            {/* Title */}
+            <div style={{ "display": "flex", "justifyContent": "space-between"}} dir={getTextDirection(metadata.title)}>
+                <h2 style={{ "marginTop": "0", "marginBottom": "1rem", "fontSize": "1.5rem", "borderBottom": "1px solid #CCCCCCFF", "paddingBottom": "0.5rem" }}>
+                    {metadata.title || "Untitled Script"} {metadata.subtitle && `- ${metadata.subtitle}`}
+                </h2>
+                {mode === "metadata" && (
+                    <h2 style={{ "marginTop": "0", "marginBottom": "1rem", "fontSize": "1.5rem", "color": "#D1D5DB" }}>
+                        {i18n.t("scriptEditor.properties")}
+                    </h2>
+                )}
             </div>
 
+            {/* Actual Page */}
             {mode === "metadata" ? (
                 <div style={{ "padding": "1rem", "backgroundColor": "#1F2937", "borderRadius": "0.5rem", "height": "80vh", "overflowY": "auto" }}>
                     <h3 style={{ "marginTop": "0", "marginBottom": "1.5rem", "color": "#ffffff", "fontSize": "1.25rem" }}>Script Metadata</h3>
@@ -257,7 +211,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                 </div>
             ) : mode === "source" ? (
                 <textarea
-                    style={{ "padding": "1rem", "width": "100%", "resize": "none", "height": "80vh", "fontFamily": "inherit", fontSize: "1em", backgroundColor: "transparent", border: "none" }}
+                    style={{ "padding": "1rem", "width": "100%", "resize": "none", "height": "80vh", "fontFamily": "inherit", fontSize: "1em", backgroundColor: "transparent", border: "none", "outline": "none", "boxShadow": "none" }}
                     value={fullText}
                     onChange={(e) => setFullText(e.target.value)}
                     spellCheck={false}
@@ -323,6 +277,7 @@ export function ScriptEditor({ file, app, setData, onSave, AlefRegular, AlefBold
                                         backgroundColor: "transparent",
                                         border: "none",
                                         outline: "none",
+                                        boxShadow: "none",
                                         fontFamily: "inherit",
                                         fontSize: "inherit",
                                         padding: "0",

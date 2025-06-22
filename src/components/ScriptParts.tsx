@@ -1,5 +1,6 @@
 import React from 'react';
 import "../../styles.css";
+import { App } from 'obsidian';
 
 // Helper function to detect RTL text
 function isRTL(text: string): boolean {
@@ -48,18 +49,27 @@ export function Action({ children }: { children: string }) {
     );
 }
 
-export function Character({ children }: { children: string }) {
+export function Character({ openCharacterNote, children }: { openCharacterNote: (name: string) => void; children: string }) {
     const direction = getTextDirection(children);
     
     return (
-        <div style={{ 
-            textAlign: 'center', 
-            textTransform: 'uppercase', 
-            marginTop: '1em',
-            direction: direction,
-            fontSize: '1.2em',
-            fontWeight: 'bold',
-        }}>
+        <div 
+            style={{ 
+                textAlign: 'center', 
+                textTransform: 'uppercase', 
+                marginTop: '1em',
+                direction: direction,
+                fontSize: '1.2em',
+                fontWeight: 'bold',
+                cursor: "pointer",
+            }}
+            className="character-name"
+            onClick={(e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    openCharacterNote(children);
+                }
+            }}
+        >
             <strong>{children}</strong>
         </div>
     );

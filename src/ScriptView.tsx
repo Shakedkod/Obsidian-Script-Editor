@@ -1,4 +1,4 @@
-import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu, HeadingCache } from "obsidian";
+import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu, HeadingCache, Notice } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { ScriptEditor } from "./components/ScriptEditor";
 import React, { useState } from "react";
@@ -6,6 +6,8 @@ import parseFull, { isScene, parseLine, ScriptMetadata } from "./scriptParser";
 import * as fs from "fs";
 import path from "path";
 import { createPDF } from "./pdf";
+import ScriptEditorPlugin from "main";
+import { I18n, i18n } from "./i18n/i18n";
 
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";
@@ -13,11 +15,21 @@ export const DEFAULT_DATA = "";
 export class ScriptView extends TextFileView {
     root: Root | null = null;
     data: string = DEFAULT_DATA;
+    plugin: ScriptEditorPlugin;
     private hasUnsavedChanges: boolean = false;
+    private currentMode: "preview" | "source" | "metadata" = "preview";
     public setMode: (mode: "preview" | "source" | "metadata") => void = () => {};
+    private actualSetMode: (mode: "preview" | "source" | "metadata") => void = () => {};
 
-    constructor(leaf: WorkspaceLeaf) {
+    constructor(leaf: WorkspaceLeaf, plugin: ScriptEditorPlugin) {
         super(leaf);
+        this.plugin = plugin;
+
+        this.setMode = (mode: "preview" | "source" | "metadata") => {
+            this.currentMode = mode;
+            // Call the actual mode change function that will be set by ScriptEditor
+            this.actualSetMode(mode);
+        };
     }
 
     getViewType(): string {
@@ -56,31 +68,63 @@ export class ScriptView extends TextFileView {
         this.hasUnsavedChanges = false;
     }
 
-    onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string): void {
-        menu.addItem((item) => {
-            item.setTitle("Switch To Preview Mode");
-            item.setIcon("switch");
-            item.onClick(() => {
-                this.setMode("preview");
+    public async openCharacterNote(name: string)
+	{
+		const folder = this.plugin.settings.characterFolder;
+		const path = `${folder}/${name}.md`;
+		const file = this.app.vault.getAbstractFileByPath(path);
+		if (file instanceof TFile) {
+			await this.app.workspace.getLeaf(true).openFile(file);
+		} else {
+			new Notice(i18n.t('notices.characterNotFound'));
+		}
+	};
+    
+    onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string): void 
+    {
+        if (this.currentMode !== "preview")
+            menu.addItem((item) => {
+                item.setTitle(i18n.t('menu.switchToPreview'));
+                item.setIcon(this.currentMode === "metadata" ? "eye" : "switch");
+                item.setSection("pane");
+                item.onClick(() => {
+                    this.setMode("preview");
+                });
             });
-        });
+
+        if (this.currentMode !== "source")
+            menu.addItem((item) => {
+                item.setTitle(i18n.t('menu.switchToSource'));
+                item.setIcon(this.currentMode === "metadata" ? "code" : "switch");
+                item.setSection("pane");
+                item.onClick(() => {
+                    this.setMode("source");
+                });
+            });
+
+        if (this.currentMode !== "metadata")
+            menu.addItem((item) => {
+                item.setTitle(i18n.t('menu.editMetadata'));
+                item.setIcon("info");
+                item.setSection("pane");
+                item.onClick(() => {
+                    this.setMode("metadata");
+                });
+            });
 
         menu.addItem((item) => {
-            item.setTitle("Switch To Source Mode");
-            item.setIcon("code");
-            item.onClick(() => {
-                this.setMode("source");
+            item.setTitle(i18n.t('menu.exportToPdf'));
+            item.setIcon("arrow-right-from-line");
+            item.setSection("action");
+            item.onClick(async () => {
+                try {
+                    await this.exportToPDF();
+                    new Notice("Script exported to PDF successfully.");
+                } catch (error) {
+                    new Notice("Failed to export script: " + error.message);
+                }
             });
         });
-
-        menu.addItem((item) => {
-            item.setTitle("Edit Metadata");
-            item.setIcon("info");
-            item.onClick(() => {
-                this.setMode("metadata");
-            });
-        });
-        menu.addSeparator();
 
         super.onPaneMenu(menu, source);
     }
@@ -90,22 +134,6 @@ export class ScriptView extends TextFileView {
         const content = await this.app.vault.read(file);
         this.data = content;
         this.hasUnsavedChanges = false;
-
-        // Add button to switch modes
-        // Add Preview Mode menu action
-        this.addAction("Preview Mode", "eye", async () => {
-            this.setMode("preview");
-        });
-
-        // Add Source Mode menu action
-        this.addAction("Source Mode", "code", async () => {
-            this.setMode("source");
-        });
-
-        // Add Metadata Mode menu action
-        this.addAction("Metadata Mode", "info", async () => {
-            this.setMode("metadata");
-        });
 
         // Load the Alef font files
         const AlefRegular = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf"));
@@ -123,7 +151,15 @@ export class ScriptView extends TextFileView {
                 onSave={() => this.hasUnsavedChanges = false}
                 AlefRegular={AlefRegular}
                 AlefBold={AlefBold}
-                setModeCallback={(cb) => this.setMode = cb}
+                setModeCallback={(cb) => {
+                    this.actualSetMode = cb;
+
+                    this.actualSetMode = (mode) => {
+                        this.currentMode = mode;
+                        cb(mode);
+                    }
+                }}
+                openCharacterNote={this.openCharacterNote.bind(this)}
             />
         );
     }

@@ -3,6 +3,7 @@ import fontkit from '@pdf-lib/fontkit';
 // @ts-ignore
 import { saveAs } from 'file-saver';
 import { Scene, Script, ScriptElement, ScriptElementType } from './scriptParser';
+import { I18n, i18nPDF, isRTL } from './i18n/i18n';
 
 const LETTER_WIDTH = 612.4; // 8.5 inches in points
 const LETTER_HEIGHT = 791; // 11 inches in points
@@ -77,10 +78,6 @@ interface ReturnArgs {
     nextPageContent?: string;
 }
 
-function isHebrew(text: string): boolean {
-    return /[\u0590-\u05FF]/.test(text);
-}
-
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
     const words = text.split(' ');
     const lines: string[] = [];
@@ -103,10 +100,7 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
 }
 
 function fixParenthesesInRTL(text: string): string {
-    const isRTL = /[\u0590-\u05FF]/.test(text);
-    if (!isRTL) return text;
-
-    // Swap only the surrounding parentheses
+    if (!isRTL(text)) return text;
     return text.replace(/\(([^)]+)\)/g, (_match, inner) => `)${inner}(`);
 }
 
@@ -120,7 +114,7 @@ function renderAction(content: string, page: PDFPage, y: number, font: PDFFont, 
         for (const line of lines) {
             const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
             page.drawText(line, {
-                x: isHebrew(line) ? pageWidth - ONE_INCH - textWidth : ONE_INCH,
+                x: i18nPDF.getTextPosition(line, textWidth, pageWidth, ONE_INCH),
                 y,
                 font,
                 size: DEFAULT_FONT_SIZE,
@@ -138,7 +132,7 @@ function renderAction(content: string, page: PDFPage, y: number, font: PDFFont, 
     for (const line of fittingLines) {
         const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
         page.drawText(line, {
-            x: isHebrew(line) ? pageWidth - ONE_INCH - textWidth : ONE_INCH,
+            x: i18nPDF.getTextPosition(line, textWidth, pageWidth, ONE_INCH),
             y,
             font,
             size: DEFAULT_FONT_SIZE,
@@ -173,14 +167,13 @@ function renderCharacter(content: string, page: PDFPage, y: number, font: PDFFon
 function renderDialogue(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
     const blockWidth = 200; // Width of the dialogue box
     const maxLines = Math.floor((y - ONE_INCH) / LINE_SPACING);
-    const isRTL = isHebrew(content);
 
     const lines = wrapText(content, font, DEFAULT_FONT_SIZE, blockWidth);
 
     if (lines.length <= maxLines) {
         for (const line of lines) {
             const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
-            const x = isRTL
+            const x = isRTL(content)
                 ? (LETTER_WIDTH + blockWidth) / 2 - textWidth // right-aligned inside block
                 : (LETTER_WIDTH - blockWidth) / 2;
             page.drawText(line, { x, y, size: DEFAULT_FONT_SIZE, font, color: rgb(0, 0, 0) });
@@ -194,7 +187,7 @@ function renderDialogue(content: string, page: PDFPage, y: number, font: PDFFont
 
     for (const line of fitting) {
         const textWidth = font.widthOfTextAtSize(line, DEFAULT_FONT_SIZE);
-        const x = isRTL
+        const x = isRTL(content)
             ? (LETTER_WIDTH + blockWidth) / 2 - textWidth // right-aligned inside block
             : (LETTER_WIDTH - blockWidth) / 2;
         page.drawText(line, { x, y, size: DEFAULT_FONT_SIZE, font, color: rgb(0, 0, 0) });
@@ -211,7 +204,7 @@ function renderDialogue(content: string, page: PDFPage, y: number, font: PDFFont
 function renderTransition(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
     const text = content.toUpperCase();
     const textWidth = font.widthOfTextAtSize(text, DEFAULT_FONT_SIZE);
-    const x = isHebrew(text) ? LETTER_WIDTH - ONE_INCH - textWidth : ONE_INCH;
+    const x = i18nPDF.getTextPosition(text, textWidth, LETTER_WIDTH, ONE_INCH);
 
     page.drawText(text, {
         x,
@@ -225,10 +218,9 @@ function renderTransition(content: string, page: PDFPage, y: number, font: PDFFo
 }
 
 function renderSubheader(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
-    const isRTL = isHebrew(content);
-    const safeContent = isRTL ? fixParenthesesInRTL(content.toUpperCase()) : content.toUpperCase();
+    const safeContent = isRTL(content) ? fixParenthesesInRTL(content.toUpperCase()) : content.toUpperCase();
     const textWidth = font.widthOfTextAtSize(safeContent, DEFAULT_FONT_SIZE);
-    const x = isRTL ? LETTER_WIDTH - ONE_INCH - textWidth : ONE_INCH;
+    const x = i18nPDF.getTextPosition(safeContent, textWidth, LETTER_WIDTH, ONE_INCH);
 
     page.drawText(safeContent, {
         x,
@@ -286,7 +278,7 @@ function renderSceneHeading(
     });
 
     const textWidth = fontBold.widthOfTextAtSize(upperText, DEFAULT_FONT_SIZE);
-    const x = isHebrew(heading) ? pageWidth - textWidth - ONE_INCH : ONE_INCH;
+    const x = i18nPDF.getTextPosition(heading, textWidth, pageWidth, ONE_INCH);
 
     page.drawText(upperText, {
         x,
@@ -346,7 +338,11 @@ async function renderScript(pdfDoc: PDFDocument, fontRegular: PDFFont, fontBold:
     }
 }
 
-export async function createPDF(fontBytesRegular: Uint8Array, fontBytesBold: Uint8Array, script: Script) {
+export async function createPDF(fontBytesRegular: Uint8Array, fontBytesBold: Uint8Array, script: Script) 
+{
+    const detectedLanguage = I18n.detectLanguage(script.title || script.writers || '');
+    i18nPDF.setLanguage(detectedLanguage);
+
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([LETTER_WIDTH, LETTER_HEIGHT]);
 
@@ -391,17 +387,41 @@ export async function createPDF(fontBytesRegular: Uint8Array, fontBytesBold: Uin
 
     // Draw author
     y -= lineSpacing;
-    y -= createWritersSubtitle(page, fontRegular, subtitleSize, "written by", script.writers, width, y);
+    y -= createWritersSubtitle(
+        page, 
+        fontRegular, 
+        subtitleSize, 
+        i18nPDF.t('pdf.writtenBy'), 
+        script.writers, 
+        width, 
+        y
+    );
 
     // Draw production company
     if (script.prod_company) {
-        createSubtitle(page, fontRegular, subtitleSize, "produced by", script.prod_company, width, y);
+        createSubtitle(
+            page, 
+            fontRegular, 
+            subtitleSize, 
+            i18nPDF.t('pdf.producedBy'), 
+            script.prod_company, 
+            width, 
+            y
+        );
         y -= lineSpacing;
     }
 
     // Draw date
     const date = new Date(script.date);
-    createSubtitle(page, fontRegular, subtitleSize, "date", `${date.getDay()}.${date.getMonth()}.${date.getFullYear()}`, width, y);
+    createSubtitle(
+        page, 
+        fontRegular, 
+        subtitleSize,
+        i18nPDF.t('pdf.date'), 
+        `${date.getDay()}.${date.getMonth()}.${date.getFullYear()}`, 
+        width, 
+        y
+    );
 
     // Script Content
     renderScript(pdfDoc, fontRegular, fontBold, script);

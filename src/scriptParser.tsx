@@ -95,42 +95,7 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
     return result;
 }
 
-export function scriptToReact(script: Script) {
-    return (
-        <>
-            {script.scenes.map((scene, index) => {
-                const totalDigits = script.scenes.length.toString().length;
-
-                return (
-                    <div key={index}>
-                        <SceneHeading>{`${scene.id.toString().padStart(totalDigits, "0")}\t${scene.heading}`}</SceneHeading>
-                        {scene.elements.map((element, elemIndex) => {
-                            switch (element.type) {
-                                case ScriptElementType.Character:
-                                    return <Character>{element.content}</Character>;
-                                case ScriptElementType.Dialogue:
-                                    return <Dialogue>{element.content}</Dialogue>;
-                                case ScriptElementType.Transition:
-                                    return <Transition>{element.content}</Transition>;
-                                case ScriptElementType.Subheader:
-                                    return <Subheader>{element.content}</Subheader>;
-                                default:
-                                    return <Action>{element.content}</Action>;
-                            }
-                        })}
-                    </div>
-                );
-            })}
-        </>
-    )
-}
-
-export function scriptStringToReact(script: string, metadata: ScriptMetadata) {
-    const parsedScript = parseFull(metadata, script);
-    return scriptToReact(parsedScript);
-}
-
-export function scriptLineToReact(line: string, numberOfScenes: number = 1, setNumberOfScenes: (count: number) => void) {
+export function scriptLineToReact(line: string, numberOfScenes: number = 1, setNumberOfScenes: (count: number) => void, openCharacterNote: (name: string) => void) {
     const parsedLine = parseLine(line);
     if (isScene(parsedLine)) {
         var output = <SceneHeading>{`${numberOfScenes + 1}\t${parsedLine.heading}`}</SceneHeading>;
@@ -140,7 +105,7 @@ export function scriptLineToReact(line: string, numberOfScenes: number = 1, setN
     else {
         switch (parsedLine.type) {
             case ScriptElementType.Character:
-                return <Character>{parsedLine.content}</Character>;
+                return <Character openCharacterNote={openCharacterNote}>{parsedLine.content}</Character>;
             case ScriptElementType.Dialogue:
                 return <Dialogue>{parsedLine.content}</Dialogue>;
             case ScriptElementType.Transition:
