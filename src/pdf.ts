@@ -1,4 +1,4 @@
-import { PDFDocument, PDFFont, PDFPage, rgb } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFName, PDFPage, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 // @ts-ignore
 import { saveAs } from 'file-saver';
@@ -266,13 +266,27 @@ function renderSceneHeading(
     sceneNumber: number = 0,
     pageWidth: number = LETTER_WIDTH
 ): number {
-    const isHebrew = /[\u0590-\u05FF]/.test(heading);
     const numberText = `${sceneNumber}`;
-    const fullText = `${numberText}\t${heading}`;
-    const upperText = fullText.toUpperCase();
+    const upperText = heading.toUpperCase();
+
+    const numberWidth = fontBold.widthOfTextAtSize(numberText, DEFAULT_FONT_SIZE);
+    page.drawText(numberText, {
+        x: ONE_INCH - numberWidth - 10, // 10 points padding from margin edge
+        y,
+        font: fontBold,
+        size: DEFAULT_FONT_SIZE,
+        color: rgb(0, 0, 0),
+    });
+    page.drawText(numberText, {
+        x: pageWidth - ONE_INCH + 10, // 10 points padding from margin edge
+        y,
+        font: fontBold,
+        size: DEFAULT_FONT_SIZE,
+        color: rgb(0, 0, 0),
+    });
 
     const textWidth = fontBold.widthOfTextAtSize(upperText, DEFAULT_FONT_SIZE);
-    const x = isHebrew ? pageWidth - textWidth - ONE_INCH : ONE_INCH;
+    const x = isHebrew(heading) ? pageWidth - textWidth - ONE_INCH : ONE_INCH;
 
     page.drawText(upperText, {
         x,

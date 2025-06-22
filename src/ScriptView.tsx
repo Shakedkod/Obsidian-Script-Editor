@@ -1,8 +1,8 @@
-import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu } from "obsidian";
+import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu, HeadingCache } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { ScriptEditor } from "./components/ScriptEditor";
 import React, { useState } from "react";
-import parseFull, { ScriptMetadata } from "./scriptParser";
+import parseFull, { isScene, parseLine, ScriptMetadata } from "./scriptParser";
 import * as fs from "fs";
 import path from "path";
 import { createPDF } from "./pdf";
