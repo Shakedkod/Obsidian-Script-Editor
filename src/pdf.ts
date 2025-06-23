@@ -4,6 +4,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { saveAs } from 'file-saver';
 import { Scene, Script, ScriptElement, ScriptElementType } from './scriptParser';
 import { I18n, i18nPDF, isRTL } from './i18n/i18n';
+import path from 'path';
 
 const LETTER_WIDTH = 612.4; // 8.5 inches in points
 const LETTER_HEIGHT = 791; // 11 inches in points
@@ -12,6 +13,8 @@ const LINE_SPACING = 18; // Default line spacing in points
 const TITLE_FONT_SIZE = 36;
 const SUBTITLE_FONT_SIZE = 14;
 const DEFAULT_FONT_SIZE = 12;
+
+const sceneBookmarks: { title: string; page: number }[] = [];
 
 function createWritersSubtitle(page: any, font: any, fontSize: number, headText: string, subText: string, pageWidth: number, y: number): number {
     // Draw the heading
@@ -78,6 +81,12 @@ interface ReturnArgs {
     nextPageContent?: string;
 }
 
+function formatTextForLTRLangsPDF(text: string): string 
+{
+    // Wrap LTR parts (numbers, English) with LTR markers
+    return text.replace(/\d+/g, (match) => match.split('').reverse().join(''));
+}
+
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
     const words = text.split(' ');
     const lines: string[] = [];
@@ -101,14 +110,18 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
 
 function fixParenthesesInRTL(text: string): string {
     if (!isRTL(text)) return text;
-    return text.replace(/\(([^)]+)\)/g, (_match, inner) => `)${inner}(`);
+    text = text.replace(/\(([^)]+)\)/g, (_match, inner) => `)${inner}(`); // Swap regular parentheses in RTL text
+    text = text.replace(/(\[)([^\]]+)(\])/g, (_match, open, inner, close) => `${close}${inner}${open}`); // Swap square brackets in RTL text
+    text = text.replace(/(\{)([^\}]+)(\})/g, (_match, open, inner, close) => `${close}${inner}${open}`); // Swap curly braces in RTL text
+    return text;
 }
 
 function renderAction(content: string, page: PDFPage, y: number, font: PDFFont, pageWidth: number = LETTER_WIDTH): ReturnArgs {
     const maxWith = pageWidth - 2 * ONE_INCH; // Leave margins
     const maxLinesPerPage = Math.floor((y - ONE_INCH) / LINE_SPACING);
 
-    const lines = wrapText(content, font, DEFAULT_FONT_SIZE, maxWith);
+    const formattedContent = isRTL(content) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
+    const lines = wrapText(formattedContent, font, DEFAULT_FONT_SIZE, maxWith);
 
     if (lines.length <= maxLinesPerPage) {
         for (const line of lines) {
@@ -153,7 +166,8 @@ function renderCharacter(content: string, page: PDFPage, y: number, font: PDFFon
     const textWidth = font.widthOfTextAtSize(name, DEFAULT_FONT_SIZE);
     const x = (LETTER_WIDTH - textWidth) / 2;
 
-    page.drawText(name, {
+    const formattedContent = isRTL(name) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(name)) : name;
+    page.drawText(formattedContent, {
         x,
         y,
         size: DEFAULT_FONT_SIZE,
@@ -168,7 +182,9 @@ function renderDialogue(content: string, page: PDFPage, y: number, font: PDFFont
     const blockWidth = 200; // Width of the dialogue box
     const maxLines = Math.floor((y - ONE_INCH) / LINE_SPACING);
 
-    const lines = wrapText(content, font, DEFAULT_FONT_SIZE, blockWidth);
+    const formattedContent = isRTL(content) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
+    console.log("Formatted content for dialogue:", formattedContent);
+    const lines = wrapText(formattedContent, font, DEFAULT_FONT_SIZE, blockWidth);
 
     if (lines.length <= maxLines) {
         for (const line of lines) {
@@ -206,7 +222,8 @@ function renderTransition(content: string, page: PDFPage, y: number, font: PDFFo
     const textWidth = font.widthOfTextAtSize(text, DEFAULT_FONT_SIZE);
     const x = i18nPDF.getTextPosition(text, textWidth, LETTER_WIDTH, ONE_INCH);
 
-    page.drawText(text, {
+    const formattedContent = isRTL(text) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(text)) : text;
+    page.drawText(formattedContent, {
         x,
         y,
         font,
@@ -218,10 +235,11 @@ function renderTransition(content: string, page: PDFPage, y: number, font: PDFFo
 }
 
 function renderSubheader(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
-    const safeContent = isRTL(content) ? fixParenthesesInRTL(content.toUpperCase()) : content.toUpperCase();
+    const safeContent = isRTL(content) ?  fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
     const textWidth = font.widthOfTextAtSize(safeContent, DEFAULT_FONT_SIZE);
     const x = i18nPDF.getTextPosition(safeContent, textWidth, LETTER_WIDTH, ONE_INCH);
 
+    
     page.drawText(safeContent, {
         x,
         y,
@@ -287,7 +305,7 @@ function renderSceneHeading(
         size: DEFAULT_FONT_SIZE,
         color: rgb(0, 0, 0),
     });
-
+    
     return y - LINE_SPACING; // Return the updated Y position after rendering the scene heading
 }
 
@@ -305,7 +323,11 @@ function renderScene(scene: Scene, doc: PDFDocument, y: number, fontRegular: PDF
     y -= 30; // Add some space before the scene heading
     if (checkPageBreak(y)) addNewPage();
 
-    y = renderSceneHeading(scene.heading, page, y, fontBold, scene.id);
+    if (scene.id > 0)
+    {
+        y = renderSceneHeading(scene.heading, page, y, fontBold, scene.id);
+        sceneBookmarks.push({ title: scene.heading, page: doc.getPageCount() - 1 });
+    }
 
     for (const element of scene.elements) {
         let content = element.content;
@@ -342,6 +364,7 @@ export async function createPDF(fontBytesRegular: Uint8Array, fontBytesBold: Uin
 {
     const detectedLanguage = I18n.detectLanguage(script.title || script.writers || '');
     i18nPDF.setLanguage(detectedLanguage);
+    sceneBookmarks.length = 0; // Reset bookmarks for each PDF generation
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([LETTER_WIDTH, LETTER_HEIGHT]);
