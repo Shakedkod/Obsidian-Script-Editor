@@ -1,12 +1,7 @@
 import React from 'react';
 import "../../styles.css";
 import { App } from 'obsidian';
-
-// Helper function to detect RTL text
-function isRTL(text: string): boolean {
-    const rtlRegex = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    return rtlRegex.test(text);
-}
+import { isRTL } from 'src/i18n/i18n'; // Assuming you have a utility function to check RTL
 
 // Helper function to get text direction
 function getTextDirection(text: string): 'rtl' | 'ltr' {
@@ -77,14 +72,22 @@ export function Character({ openCharacterNote, children }: { openCharacterNote: 
 
 export function Dialogue({ children }: { children: string }) {
     const direction = getTextDirection(children);
-    
+    var centered = false;
+
+    if (children.startsWith("\""))
+    {
+        children = children.slice(1); // Remove leading quote if present
+        centered = true; // Center dialogue if it starts with a quote
+    }
+
     return (
         <div style={{ 
-            textAlign: 'center', 
+            textAlign: centered ? 'center' : isRTL(children) ? 'right' : 'left', 
             maxWidth: '60%', 
             margin: '0 auto', 
             lineHeight: '1.5',
-            direction: direction
+            direction: direction,
+            width: centered ? '100%' : '50%',
         }}>
             {children}
         </div>

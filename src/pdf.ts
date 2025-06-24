@@ -99,53 +99,55 @@ function renderCharacter(content: string, doc: PDFType)
 
 function renderDialogue(content: string, doc: PDFType)
 {
-    const blockWidth = 200; // Width of the dialogue box
+    var isCentered = false;
+    if (content.startsWith("\""))
+    {
+        isCentered = content.startsWith("\"");
+        content = content.slice(1); // Remove the leading quote
+    }
+    const blockWidth = 300; // Width of the dialogue box
     const formattedContent = isRTL(content) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
 
+    doc.x = (doc.page.width - blockWidth) / 2; // Center the dialogue box
     doc.font("Regular").fontSize(DEFAULT_FONT_SIZE).fillColor([0, 0, 0]);
     doc.text(
         formattedContent,
         {
-            align: isRTL(content) ? "right" : "left",
+            align: isCentered ? "center" : (isRTL(content) ? "right" : "left"),
             features: getTextFeatures(formattedContent),
-            width: doc.page.width - ONE_INCH * 2 - (doc.page.width - blockWidth), // Leave margins and space for the block
+            width: blockWidth, // Leave margins and space for the block
+        }
+    );
+    doc.x = ONE_INCH; // Reset x position for the next element
+}
+
+function renderTransition(content: string, doc: PDFType) 
+{
+    const text = content.toUpperCase();
+    doc.font("Bold").fontSize(DEFAULT_FONT_SIZE).fillColor([0, 0, 0]);
+    doc.text(
+        isRTL(text) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(text)) : text,
+        { 
+            align: isRTL(content) ? "left" : "right", 
+            features: getTextFeatures(text),
+            width: doc.page.width - ONE_INCH * 2, // Leave margins on both sides
         }
     );
 }
 
-//function renderTransition(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
-//    const text = content.toUpperCase();
-//    const textWidth = font.widthOfTextAtSize(text, DEFAULT_FONT_SIZE);
-//    const x = i18nPDF.getTextPosition(text, textWidth, LETTER_WIDTH, ONE_INCH);
-//
-//    const formattedContent = isRTL(text) ? fixParenthesesInRTL(formatTextForLTRLangsPDF(text)) : text;
-//    page.drawText(formattedContent, {
-//        x,
-//        y,
-//        font,
-//        size: DEFAULT_FONT_SIZE,
-//        color: rgb(0, 0, 0),
-//    });
-//
-//    return { y: y - LINE_SPACING, pageBreak: false };
-//}
-//
-//function renderSubheader(content: string, page: PDFPage, y: number, font: PDFFont): ReturnArgs {
-//    const safeContent = isRTL(content) ?  fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
-//    const textWidth = font.widthOfTextAtSize(safeContent, DEFAULT_FONT_SIZE);
-//    const x = i18nPDF.getTextPosition(safeContent, textWidth, LETTER_WIDTH, ONE_INCH);
-//
-//    
-//    page.drawText(safeContent, {
-//        x,
-//        y,
-//        font,
-//        size: DEFAULT_FONT_SIZE,
-//        color: rgb(0, 0, 0),
-//    });
-//
-//    return { y: y - LINE_SPACING, pageBreak: false };
-//}
+function renderSubheader(content: string, doc: PDFType)
+{
+    const text = isRTL(content) ?  fixParenthesesInRTL(formatTextForLTRLangsPDF(content)) : content;
+    doc.font("Bold").fontSize(DEFAULT_FONT_SIZE).fillColor([0, 0, 0]);
+    doc.text(
+        text.toUpperCase(),
+        { 
+            align: isRTL(content) ? "right" : "left", 
+            features: getTextFeatures(text),
+            width: doc.page.width - ONE_INCH * 2, // Leave margins on both sides
+        }
+    );
+}
 
 function renderElement(element: ScriptElement, doc: PDFType) 
 {
@@ -160,10 +162,10 @@ function renderElement(element: ScriptElement, doc: PDFType)
             renderDialogue(element.content, doc);
             break;
         case ScriptElementType.Transition:
-            //renderTransition(element.content, doc);
+            renderTransition(element.content, doc);
             break;
         case ScriptElementType.Subheader:
-            //renderSubheader(element.content, doc);
+            renderSubheader(element.content, doc);
             break;
         default:
             break;
@@ -210,11 +212,19 @@ function renderScene(scene: Scene, doc: PDFType, y: number): number
         const { outline } = doc;
         outline.addItem(scene.heading, { expanded: true });
     }
-
-    for (const element of scene.elements)
+    let i = 0
+    if (scene.elements.length > 0 && scene.elements[0].type === ScriptElementType.Subheader)
     {
-        renderElement(element, doc);
-        doc.moveDown(0.5); // Add some space after each element
+        // If the first element is a subheader, render it as a scene title
+        renderSubheader(scene.elements[0].content, doc);
+        i = 1; // Start rendering elements from the second one
+    }
+
+    for (; i < scene.elements.length; i++)
+    {
+        if (i === 0 || scene.elements[i - 1].type !== scene.elements[i].type)
+            doc.moveDown(0.5); // Add some space before each element
+        renderElement(scene.elements[i], doc);
 
         if (checkEndOfPage(doc, doc.y, 0))
         {
@@ -232,28 +242,28 @@ async function renderScript(doc: PDFType, script: Script)
     for (const scene of script.scenes) 
     {
         y = renderScene(scene, doc, y);
-        doc.moveDown(2); // Add some space after each scene
+        y += 0.5 * DEFAULT_FONT_SIZE; // Add some space after each scene
     }
 }
 
-export async function createPDF(regularFontPath: string, boldFontPath: string, script: Script) 
+export async function createPDF(regularFontPath: string, regularHeFontPath: string, boldFontPath: string, boldHeFontPath: string, script: Script) 
 {
     // setting the language for the pdf
     const detectedLanguage = I18n.detectLanguage(script.title || script.writers || '');
     i18nPDF.setLanguage(detectedLanguage);
     
     // Create a new PDF document
-    const doc = new PDFDocument({ ...PAGE_OPTIONS, lang: i18nPDF.getCurrentLanguage(), font: regularFontPath });
+    const doc = new PDFDocument({ ...PAGE_OPTIONS, lang: i18nPDF.getCurrentLanguage(), font: i18nPDF.getCurrentLanguage() === 'he' ? regularHeFontPath : regularFontPath });
     const outputStream = doc.pipe(blobStream());
 
     // Load the fonts
-    doc.registerFont("Regular", regularFontPath);
-    doc.registerFont("Bold", boldFontPath);
+    doc.registerFont("Regular", i18nPDF.getCurrentLanguage() === "he" ? regularHeFontPath : regularFontPath);
+    doc.registerFont("Bold", i18nPDF.getCurrentLanguage() === "he" ? boldHeFontPath : boldFontPath);
     doc.font("Regular").fontSize(DEFAULT_FONT_SIZE);
 
     // Title page
     doc.addPage();
-    doc.y = doc.page.height / 2 - TITLE_FONT_SIZE; // Center vertically
+    doc.y = doc.page.height / 2 - TITLE_FONT_SIZE * 2; // Center vertically
     
     doc.font("Bold").fontSize(TITLE_FONT_SIZE).text(
         script.title || "Untitled Script",

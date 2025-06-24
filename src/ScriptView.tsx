@@ -168,12 +168,14 @@ export class ScriptView extends TextFileView {
             return;
         }
 
+        const CourierRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Courier-Regular.otf");
+        const CourierBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Courier-Bold.ttf"); 
         const AlefRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf");
         const AlefBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf");
 
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
-        createPDF(AlefRegular, AlefBold, parsedScript);
+        createPDF(CourierRegular, AlefRegular, CourierBold, AlefBold, parsedScript);
     };
 
     async onUnloadFile(file: TFile): Promise<void> {
