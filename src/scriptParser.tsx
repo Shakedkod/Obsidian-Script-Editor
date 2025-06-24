@@ -117,7 +117,7 @@ export function scriptLineToReact(line: string, numberOfScenes: number = 1, setN
     }
 }
 
-export function parseFrontmatter(content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
+export function parseMetadata(content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
     const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
     
     if (frontmatterMatch) {

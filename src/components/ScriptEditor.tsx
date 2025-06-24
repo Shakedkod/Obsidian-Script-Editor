@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App, TFolder } from "obsidian";
-import { scriptLineToReact, parseLine, ScriptMetadata, parseFrontmatter, serializeFrontmatter, isScene } from "src/scriptParser";
+import { scriptLineToReact, parseLine, ScriptMetadata, parseMetadata, serializeFrontmatter, isScene } from "src/scriptParser";
 import { i18n, isRTL } from "src/i18n/i18n";
 
 function getTextDirection(text: string): 'rtl' | 'ltr' {
@@ -12,13 +12,11 @@ interface Props {
     app: App;
     characterFolder: string;
     setData: (data: string) => void;
-    AlefRegular: Uint8Array;
-    AlefBold: Uint8Array;
     setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
     openCharacterNote: (name: string) => void;
 }
 
-export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular, AlefBold, setModeCallback, openCharacterNote }: Props): JSX.Element {
+export function ScriptEditor({ file, app, characterFolder, setData, setModeCallback, openCharacterNote }: Props): JSX.Element {
     const [fullText, setFullText] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
@@ -43,7 +41,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
 
     // Parse text into metadata and content whenever fullText changes
     useEffect(() => {
-        const parsed = parseFrontmatter(fullText);
+        const parsed = parseMetadata(fullText);
         setMetadata(parsed.metadata);
         setScriptContent(parsed.contentWithoutFrontmatter);
     }, [fullText]);
@@ -241,7 +239,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
                             type="text"
                             value={metadata.subtitle || ""}
                             onChange={(e) => handleMetadataChange('subtitle', e.target.value)}
-                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "color": "#ffffff", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
+                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
                             placeholder="Enter script subtitle (optional)"
                         />
                     </div>
@@ -252,7 +250,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
                             type="text"
                             value={metadata.writers}
                             onChange={(e) => handleMetadataChange('writers', e.target.value)}
-                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "color": "#ffffff", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
+                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
                             placeholder="Enter author name"
                         />
                     </div>
@@ -263,7 +261,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
                             type="text"
                             value={metadata.prod_company || ""}
                             onChange={(e) => handleMetadataChange('prod_company', e.target.value)}
-                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "color": "#ffffff", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
+                            style={{ "width": "100%", "padding": "0.5rem", "backgroundColor": "var(--background-secondary)", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
                             placeholder="Enter production company"
                         />
                     </div>
@@ -274,7 +272,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
                             type="date"
                             value={metadata.date}
                             onChange={(e) => handleMetadataChange('date', e.target.value)}
-                            style={{ "width": "100%", "padding": "0.5rem", "paddingLeft": "1.5rem", "backgroundColor": "var(--background-secondary)", "color": "#ffffff", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
+                            style={{ "width": "100%", "padding": "0.5rem", "paddingLeft": "1.5rem", "backgroundColor": "var(--background-secondary)", "border": "1px solid var(--background-modifier-border)", "borderRadius": "0.25rem", "fontFamily": "inherit" }}
                             placeholder="Enter date (e.g., 2024-01-15)"
                         />
                     </div>
@@ -290,7 +288,6 @@ export function ScriptEditor({ file, app, characterFolder, setData, AlefRegular,
                                 width: "100%",
                                 padding: "0.5rem",
                                 backgroundColor: "var(--background-secondary)",
-                                color: "#ffffff",
                                 border: "1px solid var(--background-modifier-border)",
                                 borderRadius: "0.25rem",
                                 fontFamily: "inherit",

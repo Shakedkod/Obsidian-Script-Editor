@@ -1,13 +1,11 @@
-import { TextFileView, WorkspaceLeaf, TFile, TFolder, FileSystemAdapter, Menu, HeadingCache, Notice } from "obsidian";
+import { TextFileView, WorkspaceLeaf, TFile, FileSystemAdapter, Menu, Notice } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { ScriptEditor } from "./components/ScriptEditor";
-import React, { useState } from "react";
-import parseFull, { isScene, parseLine, ScriptMetadata } from "./scriptParser";
-import * as fs from "fs";
-import path from "path";
+import parseFull, { parseMetadata } from "./scriptParser";
 import { createPDF } from "./pdf";
 import ScriptEditorPlugin from "main";
-import { I18n, i18n } from "./i18n/i18n";
+import { i18n } from "./i18n/i18n";
+import React from "react";
 
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";
@@ -135,10 +133,6 @@ export class ScriptView extends TextFileView {
         this.data = content;
         this.hasUnsavedChanges = false;
 
-        // Load the Alef font files
-        const AlefRegular = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf"));
-        const AlefBold = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf"));
-
         const container = this.containerEl.children[1];
         container.empty();
 
@@ -149,8 +143,6 @@ export class ScriptView extends TextFileView {
                 app={this.app}
                 characterFolder={this.plugin.settings.characterFolder}
                 setData={(data: string) => this.setViewData(data)}
-                AlefRegular={AlefRegular}
-                AlefBold={AlefBold}
                 setModeCallback={(cb) => {
                     this.actualSetMode = cb;
 
@@ -170,14 +162,14 @@ export class ScriptView extends TextFileView {
             console.error("No file to export.");
             return;
         }
-        const scriptMetadata = await this.getScriptMetadata(this.file);
+        const scriptMetadata = parseMetadata(await this.app.vault.read(this.file)).metadata;
         if (!scriptMetadata) {
             console.warn("No metadata found for script:", this.file.path);
             return;
         }
 
-        const AlefRegular = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf"));
-        const AlefBold = fs.readFileSync((this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf"));
+        const AlefRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf");
+        const AlefBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf");
 
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
@@ -221,45 +213,6 @@ export class ScriptView extends TextFileView {
                 await this.app.vault.modify(this.file, this.data);
                 this.hasUnsavedChanges = false;
             }
-        }
-    }
-
-    async getScriptMetadata(file: TFile): Promise<ScriptMetadata | null> {
-        const content = await this.app.vault.read(file);
-        const metadataMatch = content.match(/---\n([\s\S]*?)\n---/);
-
-        if (metadataMatch) {
-            const metadataLines = metadataMatch[1].split('\n').filter(line => line.trim() !== '');
-            const metadata: ScriptMetadata = {
-                title: "",
-                writers: "",
-                prod_company: "",
-                date: ""
-            }
-            for (const line of metadataLines) {
-                const [key, value] = line.split(':').map(part => part.trim());
-                if (key && value) {
-                    switch (key.toLowerCase()) {
-                        case 'title':
-                            metadata.title = value;
-                            break;
-                        case 'author':
-                            metadata.writers = value;
-                            break;
-                        case 'prod_company':
-                            metadata.prod_company = value;
-                            break;
-                        case 'date':
-                            metadata.date = value;
-                            break;
-                    }
-                }
-            }
-            return metadata;
-        }
-        else {
-            console.warn("No metadata found in file:", file.path);
-            return null;
         }
     }
 }
