@@ -19,7 +19,7 @@ export class ScriptView extends TextFileView {
     public setMode: (mode: "preview" | "source" | "metadata") => void = () => {};
     private actualSetMode: (mode: "preview" | "source" | "metadata") => void = () => {};
 
-    constructor(leaf: WorkspaceLeaf, plugin: ScriptEditorPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: ScriptEditorPlugin, manifest: any = null) {
         super(leaf);
         this.plugin = plugin;
 
@@ -168,10 +168,10 @@ export class ScriptView extends TextFileView {
             return;
         }
 
-        const CourierRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Courier-Regular.otf");
-        const CourierBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Courier-Bold.ttf"); 
-        const AlefRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Regular.ttf");
-        const AlefBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath("/.obsidian/plugins/script-editor/assets/Alef-Bold.ttf");
+        const CourierRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Courier-Regular.otf`);
+        const CourierBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Courier-Bold.ttf`); 
+        const AlefRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Alef-Regular.ttf`);
+        const AlefBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Alef-Bold.ttf`);
 
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
