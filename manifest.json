@@ -3,8 +3,8 @@
 	"name": "Script Editor",
 	"version": "1.0.0",
 	"minAppVersion": "1.6.7",
-	"description": "A simple script editor plugin for Obsidian that allows you to write scripts in the industry standard format.",
+	"description": "A simple script editor plugin that allows you to write scripts in the industry standard format.",
 	"author": "ShakedKod",
-	"authorUrl": "https://github.com/Shakedkod/Obsidian-Script-Editor",
+	"authorUrl": "https://github.com/Shakedkod",
 	"isDesktopOnly": true
 }
