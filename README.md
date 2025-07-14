@@ -35,6 +35,7 @@ Write scripts using simplified Markdown-style syntax:
 | Normal text        | Action lines |
 | `@NAME`            | Character name |
 | `"dialogue`        | Dialogue line |
+| `""centered`       | Centered Dialog (e.g. (whispering) or (afraid) ext.) |
 | `-CUT TO:`         | Transitions |
 
 
