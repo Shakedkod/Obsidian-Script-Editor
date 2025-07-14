@@ -99,7 +99,7 @@ function renderCharacter(content: string, doc: PDFType)
 
 function renderDialogue(content: string, doc: PDFType)
 {
-    var isCentered = false;
+    let isCentered = false;
     if (content.startsWith("\""))
     {
         isCentered = content.startsWith("\"");
@@ -238,7 +238,7 @@ function renderScene(scene: Scene, doc: PDFType, y: number): number
 
 async function renderScript(doc: PDFType, script: Script) 
 {
-    var y = ONE_INCH; // Start at the top of the page
+    let y = ONE_INCH; // Start at the top of the page
     for (const scene of script.scenes) 
     {
         y = renderScene(scene, doc, y);

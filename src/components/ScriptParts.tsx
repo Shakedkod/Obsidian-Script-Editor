@@ -72,7 +72,7 @@ export function Character({ openCharacterNote, children }: { openCharacterNote: 
 
 export function Dialogue({ children }: { children: string }) {
     const direction = getTextDirection(children);
-    var centered = false;
+    let centered = false;
 
     if (children.startsWith("\""))
     {

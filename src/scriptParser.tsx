@@ -53,7 +53,7 @@ export function isScene(obj: any): obj is Scene {
 }
 
 export default function parseFull(metadata: ScriptMetadata, content: string): Script {
-    var result: Script = {
+    let result: Script = {
         title: metadata.title,
         subtitle: metadata.subtitle, // Optional subtitle
         writers: metadata.writers,
@@ -62,11 +62,11 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
         scenes: []
     };
 
-    var sceneId = 1;
-    var currentScene: Scene | null = null;
-    var lines = content.split("\n").map(line => line.trim()).filter(line => line.length > 0);
-    for (var line of lines) {
-        var current = parseLine(line);
+    let sceneId = 1;
+    let currentScene: Scene | null = null;
+    let lines = content.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+    for (let line of lines) {
+        let current = parseLine(line);
         if (isScene(current)) {
             if (currentScene) {
                 currentScene.id = sceneId;
@@ -97,7 +97,7 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
 export function scriptLineToReact(line: string, numberOfScenes: number = 1, setNumberOfScenes: (count: number) => void, openCharacterNote: (name: string) => void) {
     const parsedLine = parseLine(line);
     if (isScene(parsedLine)) {
-        var output = <SceneHeading>{`${numberOfScenes + 1}\t${parsedLine.heading}`}</SceneHeading>;
+        let output = <SceneHeading>{`${numberOfScenes + 1}\t${parsedLine.heading}`}</SceneHeading>;
         setNumberOfScenes(numberOfScenes + 1);
         return output;
     }

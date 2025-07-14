@@ -48,12 +48,6 @@ export default class ScriptEditorPlugin extends Plugin {
 					activeLeaf.setMode(this.scriptMode);
 				}
 			},
-			hotkeys: [
-				{
-					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
-					key: "q",
-				},
-			],
 		});
 
 		this.addCommand({
@@ -68,12 +62,6 @@ export default class ScriptEditorPlugin extends Plugin {
 					new Notice("No script view is currently active.");
 				}
 			},
-			hotkeys: [
-				{
-					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
-					key: "m",
-				},
-			],
 		});
 
 		this.addCommand({
@@ -92,12 +80,6 @@ export default class ScriptEditorPlugin extends Plugin {
 					new Notice("No script view is currently active.");
 				}
 			},
-			hotkeys: [
-				{
-					modifiers: ["Mod"], // "Mod" = Ctrl on Windows/Linux, Cmd on macOS
-					key: "p",
-				},
-			],
 		});
 
 		// Automatically open the script view for .script files
@@ -115,8 +97,7 @@ export default class ScriptEditorPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	onunload() {
-		// Cleanup if necessary
-		this.app.workspace.detachLeavesOfType(SCRIPT_VIEW_TYPE);
+	onunload() 
+	{
 	}
 }

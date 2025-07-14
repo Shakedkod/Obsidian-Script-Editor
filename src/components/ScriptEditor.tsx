@@ -126,7 +126,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
     const resizeTextarea = (el: HTMLTextAreaElement | null) => {
         if (el) {
             el.style.height = "auto";
-            el.style.height = el.scrollHeight + "px";
+            el.style.height = `${el.scrollHeight}px`;
         }
     }
 
@@ -164,7 +164,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
         }
         return folder.children
             .filter(file => file instanceof TFile && file.extension === 'md')
-            .map(file => (file as TFile).basename);
+            .map(file => (file instanceof TFile) ? file.basename : "");
     };
 
     const filteredCharacters = getCharacterList().filter(c =>
@@ -425,6 +425,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
                                         resize: "none",
                                         overflow: "hidden",
                                         lineHeight: "1.5rem",
+
                                     }}
                                 />
                             ) : (

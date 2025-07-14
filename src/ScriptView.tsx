@@ -168,10 +168,17 @@ export class ScriptView extends TextFileView {
             return;
         }
 
-        const CourierRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Courier-Regular.otf`);
-        const CourierBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Courier-Bold.ttf`); 
-        const AlefRegular = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Alef-Regular.ttf`);
-        const AlefBold = (this.app.vault.adapter as FileSystemAdapter).getFullPath(`/.obsidian/plugins/${this.plugin.manifest.id}/Alef-Bold.ttf`);
+        if (!(this.app.vault.adapter instanceof FileSystemAdapter))
+        {
+            console.error("FileSystemAdapter is required for PDF export.");
+            return;
+        }
+
+        console.log();
+        const CourierRegular = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Courier-Regular.otf`);
+        const CourierBold = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Courier-Bold.ttf`); 
+        const AlefRegular = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Alef-Regular.ttf`);
+        const AlefBold = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Alef-Bold.ttf`);
 
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
