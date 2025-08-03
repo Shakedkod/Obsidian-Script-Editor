@@ -7,6 +7,37 @@ import { i18n } from 'src/i18n/i18n';
 export default class ScriptEditorPlugin extends Plugin {
 	private scriptMode: "preview" | "source" | "metadata" = "preview";
 	settings: ScriptEditorSettings;
+	statusBarItemEl: HTMLElement | undefined;
+
+	updateRuntimeEstimate = () => {
+		if (this.statusBarItemEl) {
+			this.statusBarItemEl.remove();
+			this.statusBarItemEl = undefined;
+		}
+
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile || activeFile.extension !== "script") return;
+
+		this.app.vault.read(activeFile).then((content) => {
+			const lines = content.split("\n");
+
+			let wordCount = 0;
+			for (const line of lines) {
+				const trimmed = line.trim();
+				if (!trimmed) continue;
+				// You may want to skip character or scene headings here
+				wordCount += trimmed.split(/\s+/).length;
+			}
+
+			const minutes = Math.max(1, Math.round(wordCount / 130));
+
+			if (!this.statusBarItemEl) {
+				this.statusBarItemEl = this.addStatusBarItem();
+			}
+
+			this.statusBarItemEl.setText(`🎬 ${minutes} min`);
+		});
+	};
 
 	async onload() {
 		await this.loadSettings();
@@ -15,6 +46,12 @@ export default class ScriptEditorPlugin extends Plugin {
 		this.registerView(
 			SCRIPT_VIEW_TYPE,
 			(leaf) => new ScriptView(leaf, this)
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => {
+				this.updateRuntimeEstimate();
+			})
 		);
 
 		// Add a command to create a new script file
@@ -97,7 +134,6 @@ export default class ScriptEditorPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	onunload() 
-	{
+	onunload() {
 	}
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import "../../styles.css";
 import { App } from 'obsidian';
 import { isRTL } from 'src/i18n/i18n'; // Assuming you have a utility function to check RTL
+import { renderMarkdownInline } from './markdownRenderer';
 
 // Helper function to get text direction
 function getTextDirection(text: string): 'rtl' | 'ltr' {
@@ -39,7 +40,10 @@ export function Action({ children }: { children: string }) {
             direction: direction,
             textAlign: isRtl ? 'right' : 'left'
         }}>
-            {children}
+            <div
+                dangerouslySetInnerHTML={{ __html: renderMarkdownInline(children) }}
+                dir={direction}
+            />
         </div>
     );
 }

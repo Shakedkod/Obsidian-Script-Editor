@@ -14,6 +14,7 @@
 	"devDependencies": {
 		"@types/blob-stream": "^0.1.33",
 		"@types/file-saver": "^2.0.7",
+		"@types/markdown-it": "^14.1.2",
 		"@types/node": "^16.11.6",
 		"@types/pdfkit": "^0.14.0",
 		"@types/react": "^19.1.8",
@@ -34,6 +35,8 @@
 		"browserify": "^17.0.1",
 		"file-saver": "^2.0.5",
 		"fs": "^0.0.1-security",
+		"markdown-it": "^14.1.0",
+		"markdown-it-mathjax3": "^4.3.2",
 		"pdf-lib": "^1.17.1",
 		"pdfkit": "^0.17.1",
 		"react": "^19.1.0",

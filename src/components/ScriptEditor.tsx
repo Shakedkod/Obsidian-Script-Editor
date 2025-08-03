@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
 import { TFile, App, TFolder } from "obsidian";
-import { scriptLineToReact, parseLine, ScriptMetadata, parseMetadata, serializeFrontmatter, isScene } from "src/scriptParser";
+import { scriptLineToReact, parseLine, ScriptMetadata, parseMetadata, serializeFrontmatter, isScene, ScriptElementType } from "src/scriptParser";
 import { i18n, isRTL } from "src/i18n/i18n";
 
 function getTextDirection(text: string): 'rtl' | 'ltr' {
@@ -171,10 +171,28 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
         c.toLowerCase().startsWith(characterQuery.toLowerCase())
     );
 
+    const estimateRuntimeMinutes = () => {
+        let wordCount = 0;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+
+            if (trimmed === "") continue;
+            const parsed = parseLine(trimmed);
+            if (isScene(parsed)) continue;
+            if (parsed.type === ScriptElementType.Character) continue;
+
+            wordCount += trimmed.split(/\s+/).length;
+        }
+
+        // Industry average: ~130 words per minute
+        return Math.max(1, Math.round(wordCount / 130));
+    };
+
     return (
         <div style={{ "padding": "1rem", "width": "100%", "height": "100%", "fontFamily": "Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" }}>
             {/* Title */}
-            <div style={{ "display": "flex", "justifyContent": "space-between" }} dir={getTextDirection(metadata.title)}>
+            <div style={{ "display": "flex", "justifyContent": "space-between", "alignItems": "baseline" }} dir={getTextDirection(metadata.title)}>
                 <h2 style={{ "marginTop": "0", "marginBottom": "1rem", "fontSize": "1.5rem", "borderBottom": "1px solid #CCCCCCFF", "paddingBottom": "0.5rem" }}>
                     {metadata.title || "Untitled Script"} {metadata.subtitle && `- ${metadata.subtitle}`}
                 </h2>
