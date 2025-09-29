@@ -7,6 +7,13 @@ import ScriptEditorPlugin from "main";
 import { i18n } from "./i18n/i18n";
 import React from "react";
 
+import courierRegular from "assets/Courier-Regular.otf";
+import courierBold from "assets/Courier-Bold.ttf";
+import alefRegular from "assets/Alef-Regular.ttf";
+import alefBold from "assets/Alef-Bold.ttf";
+
+import "./styles.css";
+
 export const SCRIPT_VIEW_TYPE = "script-view";
 export const DEFAULT_DATA = "";
 
@@ -35,7 +42,7 @@ export class ScriptView extends TextFileView {
     }
 
     getDisplayText(): string {
-        return this.file?.basename ?? "Untitled Script";
+        return this.file?.basename ?? "Untitled script";
     }
 
     getViewData(): string {
@@ -135,8 +142,9 @@ export class ScriptView extends TextFileView {
 
         const container = this.containerEl.children[1];
         container.empty();
+        container.createDiv({ cls: 'script-editor-container' });
 
-        this.root = createRoot(container);
+        this.root = createRoot(container.children[0]);
         this.root.render(
             <ScriptEditor
                 file={file}
@@ -162,7 +170,7 @@ export class ScriptView extends TextFileView {
             console.error("No file to export.");
             return;
         }
-        const scriptMetadata = parseMetadata(await this.app.vault.read(this.file)).metadata;
+        const scriptMetadata = parseMetadata(this.app.metadataCache.getFileCache(this.file)?.frontmatter, await this.app.vault.read(this.file)).metadata;
         if (!scriptMetadata) {
             console.warn("No metadata found for script:", this.file.path);
             return;
@@ -174,15 +182,9 @@ export class ScriptView extends TextFileView {
             return;
         }
 
-        console.log();
-        const CourierRegular = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Courier-Regular.otf`);
-        const CourierBold = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Courier-Bold.ttf`); 
-        const AlefRegular = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Alef-Regular.ttf`);
-        const AlefBold = this.app.vault.adapter.getFullPath(`/${this.app.vault.configDir}/plugins/${this.plugin.manifest.id}/Alef-Bold.ttf`);
-
         const scriptContent = (await this.app.vault.read(this.file)).split("---")[2];
         const parsedScript = parseFull(scriptMetadata, scriptContent);
-        createPDF(CourierRegular, AlefRegular, CourierBold, AlefBold, parsedScript);
+        createPDF(courierRegular, alefRegular, courierBold, alefBold, parsedScript);
     };
 
     async onUnloadFile(file: TFile): Promise<void> {
@@ -190,7 +192,6 @@ export class ScriptView extends TextFileView {
         if (this.hasUnsavedChanges && this.file) {
             try {
                 await this.app.vault.modify(this.file, this.data);
-                console.log("💾 Auto-saved on close:", this.file.basename);
             } catch (error) {
                 console.error("Failed to auto-save on close:", error);
             }
@@ -206,7 +207,6 @@ export class ScriptView extends TextFileView {
         if (this.hasUnsavedChanges && this.file) {
             try {
                 await this.app.vault.modify(this.file, this.data);
-                console.log("💾 Auto-saved on view close:", this.file.basename);
             } catch (error) {
                 console.error("Failed to auto-save on view close:", error);
             }

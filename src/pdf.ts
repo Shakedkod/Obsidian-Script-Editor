@@ -266,8 +266,8 @@ export async function createPDF(regularFontPath: string, regularHeFontPath: stri
     doc.y = doc.page.height / 2 - TITLE_FONT_SIZE * 2; // Center vertically
     
     doc.font("Bold").fontSize(TITLE_FONT_SIZE).text(
-        script.title || "Untitled Script",
-        { align: 'center', features: getTextFeatures(script.title || "Untitled Script") }
+        script.title || "Untitled script",
+        { align: 'center', features: getTextFeatures(script.title || "Untitled script") }
     );
 
     if (script.subtitle) {
@@ -298,6 +298,6 @@ export async function createPDF(regularFontPath: string, regularHeFontPath: stri
     doc.end();
     outputStream.on("finish", () => {
         const blob = outputStream.toBlob('application/pdf');
-        saveAs(blob, `${script.title || "Untitled Script"}.pdf`);
+        saveAs(blob, `${script.title || "Untitled script"}.pdf`);
     });
 }

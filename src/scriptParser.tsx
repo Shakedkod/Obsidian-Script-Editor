@@ -1,5 +1,6 @@
 import React from "react";
 import { Action, Character, Dialogue, SceneHeading, Subheader, Transition } from "./components/ScriptParts";
+import { App } from "obsidian";
 
 export type ScriptMetadata = {
     title: string;
@@ -94,7 +95,7 @@ export default function parseFull(metadata: ScriptMetadata, content: string): Sc
     return result;
 }
 
-export function scriptLineToReact(line: string, numberOfScenes: number = 1, setNumberOfScenes: (count: number) => void, openCharacterNote: (name: string) => void) {
+export function scriptLineToReact(app: App, path: string, line: string, numberOfScenes: number = 1, setNumberOfScenes: (count: number) => void, openCharacterNote: (name: string) => void) {
     const parsedLine = parseLine(line);
     if (isScene(parsedLine)) {
         let output = <SceneHeading>{`${numberOfScenes + 1}\t${parsedLine.heading}`}</SceneHeading>;
@@ -112,17 +113,15 @@ export function scriptLineToReact(line: string, numberOfScenes: number = 1, setN
             case ScriptElementType.Subheader:
                 return <Subheader>{parsedLine.content}</Subheader>;
             default:
-                return <Action>{parsedLine.content}</Action>;
+                return <Action app={app} path={path}>{parsedLine.content}</Action>;
         }
     }
 }
 
-export function parseMetadata(content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
-    const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-    
-    if (frontmatterMatch) {
-        const frontmatterContent = frontmatterMatch[1];
-        const scriptContent = frontmatterMatch[2] || '';
+export function parseMetadata(frontmatter: any, content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
+    if (frontmatter) {
+        const frontmatterContent = frontmatter;
+        const scriptContent = frontmatter[2] || '';
         
         const metadata: ScriptMetadata = {
             title: "",
@@ -185,8 +184,8 @@ export function parseMetadata(content: string): { metadata: ScriptMetadata; cont
     }
 }
 
-// Helper function to serialize metadata to frontmatter
-export function serializeFrontmatter(metadata: ScriptMetadata): string {
+//! Helper function to serialize metadata to frontmatter
+/*export function serializeFrontmatter(metadata: ScriptMetadata): string {
     const lines = [];
     
     // Helper function to properly quote values that need it
@@ -213,4 +212,4 @@ export function serializeFrontmatter(metadata: ScriptMetadata): string {
     }
     
     return `---\n${lines.join('\n')}\n---\n`;
-}
+}*/

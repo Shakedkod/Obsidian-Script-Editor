@@ -1,6 +1,8 @@
-module.exports = {
-    plugins: {
-        tailwindcss: {},
-        autoprefixer: {},
-    },
-};
+import UnoCSS from '@unocss/postcss'
+
+export default {
+    plugins: [
+        UnoCSS(),
+        autoprefixer(),
+    ],
+}

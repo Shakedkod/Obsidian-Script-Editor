@@ -2,9 +2,9 @@ import { Translations } from "../types";
 
 export const en: Translations = {
     pdf: {
-        writtenBy: "written by",
-        producedBy: "produced by",
-        date: "date",
+        writtenBy: "Written by",
+        producedBy: "Produced by",
+        date: "Date",
     },
     notices: {
         exportSuccess: "Script exported to PDF successfully.",
@@ -12,9 +12,9 @@ export const en: Translations = {
         characterNotFound: "Character not found.",
     },
     menu: {
-        switchToPreview: "Switch To Preview Mode",
-        switchToSource: "Switch To Source Mode",
-        editMetadata: "Edit Metadata",
+        switchToPreview: "Switch to preview mode",
+        switchToSource: "Switch to source mode",
+        editMetadata: "Edit metadata",
         exportToPdf: "Export to PDF",
     },
     scriptEditor: {

@@ -12,9 +12,9 @@ export const es: Translations = {
         characterNotFound: "Personaje no encontrado.",
     },
     menu: {
-        switchToPreview: "Cambiar a Modo Vista Previa",
-        switchToSource: "Cambiar a Modo Fuente",
-        editMetadata: "Editar Metadatos",
+        switchToPreview: "Cambiar a modo vista previa",
+        switchToSource: "Cambiar a modo fuente",
+        editMetadata: "Editar metadatos",
         exportToPdf: "Exportar a PDF",
     },
     scriptEditor: {
@@ -22,7 +22,7 @@ export const es: Translations = {
         title: "Título",
         subtitle: "Subtítulo",
         writers: "Escritores",
-        productionCompany: "Compañía de Producción",
+        productionCompany: "Compañía de producción",
         date: "Fecha",
     },
 };

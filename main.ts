@@ -57,7 +57,7 @@ export default class ScriptEditorPlugin extends Plugin {
 		// Add a command to create a new script file
 		this.addCommand({
 			id: 'create-new-script',
-			name: 'Create New Script',
+			name: 'Create new script',
 			callback: async () => {
 				new ScriptNameModal(this.app, async (name, subtitle, writers, prodCompany, date, characterFolder) => {
 					const safeName = name.replace(/[\\/:*?"<>|]/g, '-');
@@ -76,7 +76,7 @@ export default class ScriptEditorPlugin extends Plugin {
 
 		this.addCommand({
 			id: "toggle-preview-mode",
-			name: "Toggle Preview Mode",
+			name: "Toggle preview mode",
 			callback: () => {
 				// call a method to toggle view mode
 				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
@@ -89,7 +89,7 @@ export default class ScriptEditorPlugin extends Plugin {
 
 		this.addCommand({
 			id: "edit-script-metadata",
-			name: "Edit Script Metadata",
+			name: "Edit script metadata",
 			callback: () => {
 				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
 				if (activeLeaf) {
@@ -103,7 +103,7 @@ export default class ScriptEditorPlugin extends Plugin {
 
 		this.addCommand({
 			id: "export-script-to-pdf",
-			name: "Export Script to PDF",
+			name: "Export script to PDF",
 			callback: async () => {
 				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptView);
 				if (activeLeaf) {

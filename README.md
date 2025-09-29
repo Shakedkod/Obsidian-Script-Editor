@@ -1,4 +1,4 @@
-# 🎬 Obsidian Script Editor
+# 🎬 Script Editor for Obsidian
 
 Write and structure screenplays directly inside Obsidian using an intuitive, Markdown-inspired format.  
 Supports live formatting, metadata, character management, and PDF export — all within your writing vault.

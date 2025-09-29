@@ -38,11 +38,16 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
-	loader: {
-		'.ttf': 'file',
-		'.otf': 'file',
-	},
 	minify: prod,
+	loader: {
+		'.woff': 'dataurl',
+		'.woff2': 'dataurl',
+		'.ttf': 'dataurl',
+		'.otf': 'dataurl',
+	},
+	/*
+	plugins: [fontEmbedPlugin]
+	*/
 });
 
 if (prod) {

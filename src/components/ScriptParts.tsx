@@ -1,8 +1,7 @@
 import React from 'react';
 import "../../styles.css";
-import { App } from 'obsidian';
 import { isRTL } from 'src/i18n/i18n'; // Assuming you have a utility function to check RTL
-import { renderMarkdownInline } from './markdownRenderer';
+import { App, Component, MarkdownRenderer } from 'obsidian';
 
 // Helper function to get text direction
 function getTextDirection(text: string): 'rtl' | 'ltr' {
@@ -29,21 +28,30 @@ export function SceneHeading({ children }: { children: string }) {
     );
 }
 
-export function Action({ children }: { children: string }) {
+export function Action({ app, path, children }: { app: App; path: string; children: string }) {
     const direction = getTextDirection(children);
     const isRtl = direction === 'rtl';
-    
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (containerRef.current) {
+            // Clear previous content
+            containerRef.current.innerHTML = "";
+            // Render markdown into the container
+            MarkdownRenderer.render(app, children, containerRef.current, path, new Component());
+        }
+    }, [children]);
+
     return (
-        <div style={{ 
-            marginTop: '0.5em', 
-            lineHeight: '1.5',
-            direction: direction,
-            textAlign: isRtl ? 'right' : 'left'
-        }}>
-            <div
-                dangerouslySetInnerHTML={{ __html: renderMarkdownInline(children) }}
-                dir={direction}
-            />
+        <div
+            style={{
+                marginTop: '0.5em',
+                lineHeight: '1.5',
+                direction: direction,
+                textAlign: isRtl ? 'right' : 'left'
+            }}
+        >
+            <div ref={containerRef} />
         </div>
     );
 }

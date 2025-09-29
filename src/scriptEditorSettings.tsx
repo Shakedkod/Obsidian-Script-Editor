@@ -21,8 +21,6 @@ export default class ScriptEditorSettingsTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "Script Editor Settings" });
-
         new Setting(containerEl)
             .setName("Character folder")
             .setDesc("Folder containing character notes")

@@ -23,5 +23,5 @@
   "include": [
     "**/*.ts",
     "src/*.tsx"
-  ]
+, "src/font-embed-plugin.js"  ]
 }

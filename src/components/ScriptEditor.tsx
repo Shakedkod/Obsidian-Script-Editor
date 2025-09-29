@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef, JSX } from "react";
-import { TFile, App, TFolder } from "obsidian";
-import { scriptLineToReact, parseLine, ScriptMetadata, parseMetadata, serializeFrontmatter, isScene, ScriptElementType } from "src/scriptParser";
+import { TFile, App, TFolder, stringifyYaml } from "obsidian";
+import { scriptLineToReact, parseLine, ScriptMetadata, parseMetadata, isScene } from "src/scriptParser";
 import { i18n, isRTL } from "src/i18n/i18n";
+
+import "../../styles.css";
 
 function getTextDirection(text: string): 'rtl' | 'ltr' {
     return isRTL(text) ? 'rtl' : 'ltr';
@@ -41,7 +43,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
 
     // Parse text into metadata and content whenever fullText changes
     useEffect(() => {
-        const parsed = parseMetadata(fullText);
+        const parsed = parseMetadata(app.metadataCache.getFileCache(file)?.frontmatter, fullText);
         setMetadata(parsed.metadata);
         setScriptContent(parsed.contentWithoutFrontmatter);
     }, [fullText]);
@@ -53,7 +55,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
 
     // Update full text when metadata or script content changes
     const updateFullText = (newMetadata: ScriptMetadata, newScriptContent: string) => {
-        const frontmatter = serializeFrontmatter(newMetadata);
+        const frontmatter = stringifyYaml(newMetadata);
         const newFullText = frontmatter + newScriptContent;
         setFullText(newFullText);
         setData(newFullText);
@@ -112,7 +114,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
                 </div>
             );
         } else {
-            return scriptLineToReact(line, 0, () => { }, openCharacterNote);
+            return scriptLineToReact(app, file.path, line, 0, () => { }, openCharacterNote);
         }
     };
 
@@ -151,7 +153,6 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
                 const filePath = `${folderPath}/${safeName}.md`;
                 if (!app.vault.getAbstractFileByPath(filePath)) {
                     await app.vault.create(filePath, "");
-                    console.log("🆕 Created new character:", safeName);
                 }
             }
         }
@@ -171,30 +172,12 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
         c.toLowerCase().startsWith(characterQuery.toLowerCase())
     );
 
-    const estimateRuntimeMinutes = () => {
-        let wordCount = 0;
-
-        for (const line of lines) {
-            const trimmed = line.trim();
-
-            if (trimmed === "") continue;
-            const parsed = parseLine(trimmed);
-            if (isScene(parsed)) continue;
-            if (parsed.type === ScriptElementType.Character) continue;
-
-            wordCount += trimmed.split(/\s+/).length;
-        }
-
-        // Industry average: ~130 words per minute
-        return Math.max(1, Math.round(wordCount / 130));
-    };
-
     return (
         <div style={{ "padding": "1rem", "width": "100%", "height": "100%", "fontFamily": "Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" }}>
             {/* Title */}
             <div style={{ "display": "flex", "justifyContent": "space-between", "alignItems": "baseline" }} dir={getTextDirection(metadata.title)}>
                 <h2 style={{ "marginTop": "0", "marginBottom": "1rem", "fontSize": "1.5rem", "borderBottom": "1px solid #CCCCCCFF", "paddingBottom": "0.5rem" }}>
-                    {metadata.title || "Untitled Script"} {metadata.subtitle && `- ${metadata.subtitle}`}
+                    {metadata.title || "Untitled script"} {metadata.subtitle && `- ${metadata.subtitle}`}
                 </h2>
                 {mode === "metadata" && (
                     <h2 style={{ "marginTop": "0", "marginBottom": "1rem", "fontSize": "1.5rem", "color": "#D1D5DB" }}>
@@ -317,7 +300,7 @@ export function ScriptEditor({ file, app, characterFolder, setData, setModeCallb
                     <div style={{ "marginTop": "2rem", "padding": "1rem", "backgroundColor": "var(--background-secondary)", "borderRadius": "0.25rem" }}>
                         <h4 style={{ "marginTop": "0", "marginBottom": "0.5rem", "color": "#D1D5DB" }}>Preview:</h4>
                         <pre style={{ "margin": "0", "fontSize": "0.875rem", "whiteSpace": "pre-wrap" }}>
-                            {serializeFrontmatter(metadata) || "No metadata to display"}
+                            {stringifyYaml(metadata) || "No metadata to display"}
                         </pre>
                     </div>
                 </div>

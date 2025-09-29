@@ -1,2 +1,8 @@
 /* styles.css */
-/*# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFtdLAogICJzb3VyY2VzQ29udGVudCI6IFtdLAogICJtYXBwaW5ncyI6ICIiLAogICJuYW1lcyI6IFtdCn0K */
+@unocss;
+
+/* src/styles.css */
+@unocss preflights;
+@unocss default;
+@unocss;
+/*# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsic3R5bGVzLmNzcyIsICJzcmMvc3R5bGVzLmNzcyJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiQHVub2NzczsiLCAiQHVub2NzcyBwcmVmbGlnaHRzO1xyXG5AdW5vY3NzIGRlZmF1bHQ7XHJcblxyXG5AdW5vY3NzOyJdLAogICJtYXBwaW5ncyI6ICI7QUFBQTs7O0FDQUE7QUFDQTtBQUVBOyIsCiAgIm5hbWVzIjogW10KfQo= */
