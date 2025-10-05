@@ -1,4 +1,5 @@
-export interface Translations {
+export interface Translations
+{
     pdf: {
         writtenBy: string;
         producedBy: string;
@@ -27,7 +28,8 @@ export interface Translations {
 
 export type SupportedLanguage = 'en' | 'he' | 'es' | 'fr' | 'de'; // Add more as needed
 
-export interface LanguageConfig {
+export interface LanguageConfig
+{
     code: SupportedLanguage;
     name: string;
     isRTL: boolean;

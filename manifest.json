@@ -1,10 +1,10 @@
 {
-	"id": "script-editor",
-	"name": "Script Editor",
-	"version": "1.0.0",
-	"minAppVersion": "1.6.7",
-	"description": "This is a plugin that enables you to write screenplays in the industry standard format.",
-	"author": "ShakedKod",
-	"authorUrl": "https://github.com/Shakedkod",
-	"isDesktopOnly": true
+  "id": "react-starter",
+  "name": "React Starter",
+  "description": "Obsidian + ReactJS",
+  "version": "0.0.0",
+  "author": "Liam Cain",
+  "authorUrl": "https://github.com/liamcain/",
+  "isDesktopOnly": true,
+  "minAppVersion": "0.10.8"
 }
