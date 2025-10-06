@@ -151,3 +151,13 @@ export function formatDate(date: Date, language?: SupportedLanguage): string
     
     return date.toLocaleDateString(localeMap[locale]);
 }
+
+export function getTextDirection(text: string): 'rtl' | 'ltr'
+{
+    return isRTL(text) ? 'rtl' : 'ltr';
+}
+
+export function getTextAlign(text: string): "right" | "left"
+{
+    return isRTL(text) ? "right" : "left";
+}

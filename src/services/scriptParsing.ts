@@ -1,11 +1,35 @@
-import { ScriptMetadata } from "../models/ScriptModel";
-import { FrontMatterCache } from "obsidian";
+import { Scene, ScriptElementType, ScriptMetadata } from "../models/ScriptModel";
+import { App, TFile, TFolder } from "obsidian";
 
 /*
 *
 *   SCRIPT PARSING
 *
 */
+export function parseLine(line: string): { type: ScriptElementType; content: string } | Scene
+{
+    if (line.startsWith("## "))
+        return { type: ScriptElementType.Subheader, content: line.slice(2).trim() };
+    if (line.startsWith("# "))
+        return { id: 0, heading: line.slice(1).trim(), elements: [] };
+    if (line.startsWith("@"))
+        return { type: ScriptElementType.Character, content: line.slice(1).trim() };
+    if (line.startsWith("\""))
+        return { type: ScriptElementType.Dialogue, content: line.slice(1).trim() };
+    if (line.startsWith("- "))
+        return { type: ScriptElementType.Transition, content: line.slice(1).trim() };
+    return { type: ScriptElementType.Action, content: line.trim() };
+}
+
+export function getCharacterList(app: App, metadata: ScriptMetadata, characterFolder: string): string[]
+{
+    const folder = app.vault.getAbstractFileByPath(metadata.characterFolder || characterFolder);
+    if (!(folder instanceof TFolder)) return [];
+
+    return folder.children
+        .filter(file => file instanceof TFile && file.extension === 'md')
+        .map(file => (file instanceof TFile) ? file.basename : "");
+}
 
 
 /*
@@ -13,11 +37,16 @@ import { FrontMatterCache } from "obsidian";
 *   SCRIPT METADATA PARSING
 *
 */
-// TODO: edit this function to work
-export function parseMetadata(frontmatter: FrontMatterCache, content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
-    if (frontmatter) {
-        const frontmatterContent = frontmatter;
-        const scriptContent = frontmatter[2] || '';
+
+// This function it technically not by obsidian standards,
+//      but I didn't manage to get the app.metadataCache.getFileCache(file) to be anything but null
+export function parseMetadata(content: string): { metadata: ScriptMetadata; contentWithoutFrontmatter: string } {
+    const parts = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+
+    if (parts)
+    {
+        const frontmatter = parts[1];
+        const scriptContent = parts[2] || '';
 
         const metadata: ScriptMetadata = {
             title: "",
@@ -28,7 +57,7 @@ export function parseMetadata(frontmatter: FrontMatterCache, content: string): {
             characterFolder: "" // Optional folder for character notes
         };
 
-        const lines = frontmatterContent.split(/\r?\n/);
+        const lines = frontmatter.split(/\r?\n/);
         for (const line of lines) {
             const colonIndex = line.indexOf(':');
             if (colonIndex > 0) {
@@ -65,8 +94,8 @@ export function parseMetadata(frontmatter: FrontMatterCache, content: string): {
         }
 
         return { metadata, contentWithoutFrontmatter: scriptContent };
-    } else {
-        // No frontmatter found, return empty metadata and full content
+    }
+    else // No frontmatter found, return empty metadata and full content
         return {
             metadata: {
                 title: "",
@@ -77,35 +106,4 @@ export function parseMetadata(frontmatter: FrontMatterCache, content: string): {
             },
             contentWithoutFrontmatter: content
         };
-    }
 }
-
-//! Helper function to serialize metadata to frontmatter
-/*export function serializeFrontmatter(metadata: ScriptMetadata): string {
-    const lines = [];
-
-    // Helper function to properly quote values that need it
-    const formatValue = (value: string): string => {
-        if (!value) return '';
-        // Quote if contains special characters, starts/ends with spaces, or contains colons
-        if (value.includes(':') || value.includes('#') || value.includes('[') || value.includes(']') ||
-            value.includes('{') || value.includes('}') || value.includes('|') || value.includes('>') ||
-            value.startsWith(' ') || value.endsWith(' ') || value.includes('\n')) {
-            return `"${value.replace(/"/g, '\\"')}"`;
-        }
-        return value;
-    };
-
-    if (metadata.title) lines.push(`title: ${formatValue(metadata.title)}`);
-    if (metadata.subtitle) lines.push(`subtitle: ${formatValue(metadata.subtitle)}`); // Optional subtitle
-    if (metadata.writers) lines.push(`author: ${formatValue(metadata.writers)}`);
-    if (metadata.prod_company) lines.push(`prod_company: ${formatValue(metadata.prod_company)}`);
-    if (metadata.date) lines.push(`date: ${formatValue(metadata.date)}`);
-    if (metadata.characterFolder) lines.push(`characterFolder: ${formatValue(metadata.characterFolder)}`); // Optional folder for character notes
-
-    if (lines.length === 0) {
-        return '';
-    }
-
-    return `---\n${lines.join('\n')}\n---\n`;
-}*/

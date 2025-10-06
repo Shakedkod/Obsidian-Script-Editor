@@ -26,7 +26,8 @@ export class ScriptEditorView extends TextFileView
         this.hasUnsavedChanges = false;
 
         this.root = React.createElement(ScriptEditor({
-            data: this.data,
+            app: this.app,
+            file: this.file,
             setData: (data: string) => this.setViewData(data, false)
         }));
 
