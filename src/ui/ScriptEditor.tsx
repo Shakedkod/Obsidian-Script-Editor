@@ -2,11 +2,11 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import { getCharacterList, parseMetadata } from "../services/scriptParsing";
 import { App, stringifyYaml, TFile } from "obsidian";
-import { ScriptMetadata } from "../models/ScriptModel";
 import { getTextDirection, i18n } from "../i18n/i18n";
 import ViewPage from "./components/ViewPage";
 import SourcePage from "./components/SourcePage";
 import MetadataPage from "./components/MetadataPage";
+import { ScriptMetadata } from "src/models/ScriptMetadata";
 
 interface Props {
     app: App;
@@ -24,10 +24,11 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
     const [scriptContent, setScriptContent] = useState("");
     const [metadata, setMetadata] = useState<ScriptMetadata>({
         title: "",
-        writers: "",
-        prod_company: "",
-        date: "",
-        characterFolder: "", //characterFolder,
+        writers: "inherit",
+        prodCompany: "inherit",
+        date: "inherit",
+        characterFolder: "inherit",
+        locationFolder: "inherit"
     });
 
     // Editor vars

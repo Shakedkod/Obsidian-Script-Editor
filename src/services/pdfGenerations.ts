@@ -147,32 +147,36 @@ function renderTitlePage(doc: PDFType, script: Script): void {
     doc.y = doc.page.height / 2 - FONT_SIZES.TITLE * 2;
     
     // Main title
-    const title = script.title || "Untitled script";
+    const title = script.metadata.title || "Untitled script";
     doc.font("Bold")
         .fontSize(FONT_SIZES.TITLE)
         .text(title, { align: 'center', features: getTextFeatures(title) });
 
     // Subtitle (if exists)
-    if (script.subtitle) {
+    if (script.metadata.subtitle) {
         doc.font("Regular")
             .fontSize(FONT_SIZES.TITLE * 0.6)
-            .text(script.subtitle, { align: 'center', features: getTextFeatures(script.subtitle) });
+            .text(script.metadata.subtitle, { align: 'center', features: getTextFeatures(script.metadata.subtitle) });
     }
     
     // Writers
     doc.moveDown(2);
-    createWritersSubtitle(doc, i18nPDF.t("pdf.writtenBy"), script.writers || "Unknown Writer");
+    createWritersSubtitle(doc, 
+        i18nPDF.t("pdf.writtenBy"), (script.metadata.writers == "inherit") 
+        ? "inherit" 
+        : script.metadata.writers.join(", ") || "Unknown Writer"
+    );
 
     // Production company (if exists)
-    if (script.prod_company) {
+    if (script.metadata.prodCompany) {
         doc.moveDown(1);
-        createSubtitle(doc, i18nPDF.t("pdf.producedBy"), script.prod_company);
+        createSubtitle(doc, i18nPDF.t("pdf.producedBy"), script.metadata.prodCompany);
     }
 
     // Date (if exists)
-    if (script.date) {
+    if (script.metadata.date) {
         doc.moveDown(1);
-        const formattedDate = new Date(script.date).toLocaleDateString(i18nPDF.getCurrentLanguage());
+        const formattedDate = new Date(script.metadata.date).toLocaleDateString(i18nPDF.getCurrentLanguage());
         createSubtitle(doc, i18nPDF.t("pdf.date"), formattedDate);
     }
 }
@@ -411,7 +415,12 @@ function initializeFonts(doc: PDFType, language: string): void {
  */
 export async function createPDF(script: Script): Promise<void> {
     // Detect language and configure i18n
-    const detectedLanguage = I18n.detectLanguage(script.title || script.writers || '');
+    const detectedLanguage = I18n.detectLanguage(
+        script.metadata.title || 
+        (typeof script.metadata.writers === "string" 
+            ? '' 
+            : script.metadata.writers.join(", ")) || ''
+    );
     i18nPDF.setLanguage(detectedLanguage);
     
     // Create PDF document
@@ -436,7 +445,7 @@ export async function createPDF(script: Script): Promise<void> {
     doc.end();
     outputStream.on("finish", () => {
         const blob = outputStream.toBlob('application/pdf');
-        const fileName = `${script.title || "Untitled script"}.pdf`;
+        const fileName = `${script.metadata.title || "Untitled script"}.pdf`;
         saveAs(blob, fileName);
     });
 }

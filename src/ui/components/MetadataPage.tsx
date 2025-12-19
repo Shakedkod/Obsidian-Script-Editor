@@ -1,29 +1,46 @@
 import React from "react";
-import { ScriptMetadata } from "src/models/ScriptModel";
+import { ScriptMetadata } from "src/models/ScriptMetadata";
 
 interface MetadataItemProps
 {
     field: string;
+    inherited?: boolean;
+    type: string | Date | string[];
     data: string;
     handleMetadataChange: (key: string, value: string) => void;
     label: string;
     placeholder: string;
 }
 
-function MetadataItem({ field, data, handleMetadataChange, label, placeholder }: MetadataItemProps): JSX.Element
+function MetadataItem({ field, inherited, type, data, handleMetadataChange, label, placeholder }: MetadataItemProps): JSX.Element
 {
-    return (
-        <div className="SE-MP-ITEM-container" key={field}>
-            <label className="SE-MP-ITEM-label">{label}:</label>
-            <input
-                className="SE-MP-ITEM-input"
-                type="text"
-                value={data}
-                onChange={(e) => handleMetadataChange(field, e.target.value)}
-                placeholder={placeholder}
-            />
-        </div>
-    );
+    //if (!inherited)
+        return (
+            <div className="SE-MP-ITEM-container" key={field}>
+                <label className="SE-MP-ITEM-label">{label}:</label>
+                <input
+                    className="SE-MP-ITEM-input"
+                    type="text"
+                    value={data}
+                    onChange={(e) => handleMetadataChange(field, e.target.value)}
+                    placeholder={placeholder}
+                />
+            </div>
+        );
+
+    //return (
+    //    <div className="SE-MP-ITEM-container" key={field}>
+    //        <label className="SE-MP-ITEM-label">{label}:</label>
+    //        <input
+    //            className="SE-MP-ITEM-input-disabled"
+    //            type="text"
+    //            value={data}
+    //            onChange={(e) => handleMetadataChange(field, e.target.value)}
+    //            placeholder={placeholder}
+    //            disabled
+    //        />
+    //    </div>
+    //);
 }
 
 interface MetadataPageProps
@@ -36,48 +53,69 @@ export default function MetadataPage({ metadata, updateMetadata }: MetadataPageP
 {
     return (
         <div className="SE-page-container">
-            <MetadataItem
-                field="title"
-                data={metadata.title}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Title"
-                placeholder="Enter script title"
-            />
-            <MetadataItem
-                field="subtitle"
-                data={metadata.subtitle || ""}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Subtitle"
-                placeholder="Enter script subtitle"
-            />
-            <MetadataItem
-                field="writers"
-                data={metadata.writers}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Writers"
-                placeholder="Enter writer(s) name"
-            />
-            <MetadataItem
-                field="prod_company"
-                data={metadata.prod_company}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Production Company"
-                placeholder="Enter production company"
-            />
-            <MetadataItem
-                field="date"
-                data={metadata.date}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Date"
-                placeholder="Enter date"
-            />
-            <MetadataItem
-                field="characterFolder"
-                data={metadata.characterFolder || ""}
-                handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                label="Character Folder"
-                placeholder="Enter character notes folder"
-            />
+            {/* Actual Script Items */}
+            <section className="SE-MP-section">
+                <MetadataItem
+                    field="title"
+                    inherited={false}
+                    data={metadata.title}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Title"
+                    placeholder="Enter script title"
+                />
+                <MetadataItem
+                    field="subtitle"
+                    inherited={false}
+                    data={metadata.subtitle || ""}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Subtitle"
+                    placeholder="Enter script subtitle"
+                />
+                <MetadataItem
+                    field="writers"
+                    inherited={metadata.writers === "inherit"}
+                    data={Array.isArray(metadata.writers) ? metadata.writers.join(", ") : metadata.writers}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value.split(",").map(s => s.trim()) })}
+                    label="Writers"
+                    placeholder="Enter writer(s) name"
+                />
+                <MetadataItem
+                    field="prod_company"
+                    inherited={metadata.prodCompany === "inherit"}
+                    data={metadata.prodCompany}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Production Company"
+                    placeholder="Enter production company"
+                />
+                <MetadataItem
+                    field="date"
+                    inherited={metadata.date === "inherit"}
+                    data={metadata.date}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Date"
+                    placeholder="Enter date"
+                />
+            </section>
+
+            {/* Plugin Metadata Items */}
+            <section className="SE-MP-section">
+                <MetadataItem
+                    field="characterFolder"
+                    inherited={metadata.characterFolder === "inherit"}
+                    data={metadata.characterFolder || ""}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Character Folder"
+                    placeholder="Enter character notes folder"
+                />
+                <MetadataItem
+                    field="locationFolder"
+                    inherited={metadata.locationFolder === "inherit"}
+                    data={metadata.locationFolder || ""}
+                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
+                    label="Location Folder"
+                    placeholder="Enter location notes folder"
+                />
+            </section>
         </div>
     );
 }

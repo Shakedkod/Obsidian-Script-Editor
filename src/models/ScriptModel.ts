@@ -1,11 +1,4 @@
-export type ScriptMetadata = {
-    title: string;
-    subtitle?: string; // Optional subtitle
-    writers: string;
-    prod_company: string;
-    date: string;
-    characterFolder?: string; // Optional folder for character notes
-};
+import { ScriptMetadata } from "./ScriptMetadata";
 
 export enum ScriptElementType
 {
@@ -28,7 +21,9 @@ export type Scene = {
     elements: ScriptElement[];
 };
 
-export type Script = ScriptMetadata & {
+export interface Script 
+{
+    metadata: ScriptMetadata;
     scenes: Scene[];
 };
 

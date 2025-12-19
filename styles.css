@@ -74,13 +74,14 @@
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   font-size: 1.5rem;
-  border-bottom: 1px solid #CCCCCCFF;
+  color: var(--text-normal);
+  border-bottom: 1px solid var(--text-accent);
 }
 .SE-MP-title {
   margin-top: 0;
   margin-bottom: 1rem;
   font-size: 1.5rem;
-  color: #D1D5DB;
+  color: var(--text-muted);
 }
 .SE-page-container {
   display: flex;
@@ -123,7 +124,6 @@
   line-height: 1.5rem;
   padding: 0;
   margin: 0;
-  background-color: #6B7280;
 }
 .SE-VP-sceneHeading-container {
   font-weight: bold;
@@ -151,8 +151,11 @@
 .SE-MP-ITEM-label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #D1D5DB;
+  color: var(--text-normal);
   font-weight: bold;
+}
+.SE-MP-section {
+  margin-bottom: 2rem;
 }
 .SE-MP-ITEM-input {
   width: 100%;
@@ -161,4 +164,14 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 0.25rem;
   font-family: inherit;
+}
+.SE-MP-ITEM-input-disabled {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: var(--background-secondary-alt) !important;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.25rem;
+  font-family: inherit;
+  color: var(--text-faint) !important;
+  z-index: -1;
 }

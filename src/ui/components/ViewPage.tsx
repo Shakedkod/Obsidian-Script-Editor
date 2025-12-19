@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { isScene, ScriptMetadata } from "../../models/ScriptModel";
+import { isScene } from "../../models/ScriptModel";
 import { getTextAlign, getTextDirection } from "../../i18n/i18n";
 import { getCharacterList, parseLine } from "../../services/scriptParsing";
 import scriptLineToReact from "./ScriptComponents";
 import { App, TFolder } from "obsidian";
+import { ScriptMetadata } from "src/models/ScriptMetadata";
 
 function resizeTextarea (el: HTMLTextAreaElement | null)
 {
@@ -295,7 +296,7 @@ export default function ViewPage(
                     setTimeout(() => setActiveLine(lines.length), 0);
                 }}
             >
-                <div className="SE-VP-bottom" style={{backgroundColor: "transparent"}}>
+                <div className="SE-VP-bottom">
                     {"\u00A0"}
                 </div>
             </div>

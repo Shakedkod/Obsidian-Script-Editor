@@ -1,4 +1,5 @@
-import { isScene, Scene, Script, ScriptElementType, ScriptMetadata } from "../models/ScriptModel";
+import { ScriptMetadata } from "src/models/ScriptMetadata";
+import { isScene, Scene, Script, ScriptElementType } from "../models/ScriptModel";
 import { App, TFile, TFolder } from "obsidian";
 
 /*
@@ -11,9 +12,9 @@ export function parseLine(line: string): { type: ScriptElementType; content: str
     if (line.startsWith("## "))
         return { type: ScriptElementType.Subheader, content: line.slice(2).trim() };
     if (line.startsWith("# "))
-        return { id: 0, heading: line.slice(1).trim(), elements: [] };
-    if (line.startsWith("@"))
-        return { type: ScriptElementType.Character, content: line.slice(1).trim() };
+        return { id: 0, heading: line.slice(2).trim(), elements: [] };
+    if (line.startsWith("@ "))
+        return { type: ScriptElementType.Character, content: line.slice(2).trim() };
     if (line.startsWith("\""))
         return { type: ScriptElementType.Dialogue, content: line.slice(1).trim() };
     if (line.startsWith("- "))
@@ -33,11 +34,15 @@ export function getCharacterList(app: App, metadata: ScriptMetadata, characterFo
 
 export function parseFull(metadata: ScriptMetadata, content: string): Script {
     const result: Script = {
-        title: metadata.title,
-        subtitle: metadata.subtitle,
-        writers: metadata.writers,
-        prod_company: metadata.prod_company,
-        date: metadata.date,
+        metadata: {
+            title: metadata.title,
+            subtitle: metadata.subtitle,
+            writers: metadata.writers,
+            prodCompany: metadata.prodCompany,
+            date: metadata.date,
+            characterFolder: metadata.characterFolder,
+            locationFolder: metadata.locationFolder
+        },
         scenes: []
     };
 
@@ -91,11 +96,12 @@ export function parseMetadata(content: string): { metadata: ScriptMetadata; cont
 
         const metadata: ScriptMetadata = {
             title: "",
-            subtitle: "", // Optional subtitle
-            writers: "",
-            prod_company: "",
-            date: "",
-            characterFolder: "" // Optional folder for character notes
+            subtitle: "",
+            writers: "inherit",
+            prodCompany: "inherit",
+            date: "inherit",
+            characterFolder: "inherit",
+            locationFolder: "inherit"
         };
 
         const lines = frontmatter.split(/\r?\n/);
@@ -116,19 +122,22 @@ export function parseMetadata(content: string): { metadata: ScriptMetadata; cont
                         metadata.title = value;
                         break;
                     case 'subtitle':
-                        metadata.subtitle = value; // Optional subtitle
+                        metadata.subtitle = value;
                         break;
                     case 'writers':
-                        metadata.writers = value;
+                        metadata.writers = value === "inherit" ? "inherit" : value.split(",").map(s => s.trim());
                         break;
                     case 'prod_company':
-                        metadata.prod_company = value;
+                        metadata.prodCompany = value;
                         break;
                     case 'date':
                         metadata.date = value;
                         break;
-                    case 'characterfolder':
-                        metadata.characterFolder = value; // Optional folder for character notes
+                    case 'character_folder':
+                        metadata.characterFolder = value;
+                        break;
+                    case 'location_folder':
+                        metadata.locationFolder = value;
                         break;
                 }
             }
@@ -140,10 +149,11 @@ export function parseMetadata(content: string): { metadata: ScriptMetadata; cont
         return {
             metadata: {
                 title: "",
-                writers: "",
-                prod_company: "",
-                date: "",
-                characterFolder: "" // Optional folder for character notes
+                writers: "inherit",
+                prodCompany: "inherit",
+                date: "inherit",
+                characterFolder: "inherit",
+                locationFolder: "inherit"
             },
             contentWithoutFrontmatter: content
         };
