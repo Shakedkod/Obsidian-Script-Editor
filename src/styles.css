@@ -1,0 +1,204 @@
+@font-face 
+{
+    font-family: "Alef";
+    src: url("./fonts/Alef-Regular.ttf") format("woff2");
+    font-weight: normal;
+}
+
+@font-face
+{
+    font-family: "Alef";
+    src: url("./fonts/Alef-Bold.ttf") format("woff2");
+    font-weight: bold;
+}
+
+@font-face
+{
+    font-family: "Courier";
+    src: url("./fonts/Courier-Regular.otf") format("woff2");
+    font-weight: normal;
+}
+
+@font-face
+{
+    font-family: "Courier";
+    src: url("./fonts/Courier-Bold.ttf") format("woff2");
+    font-weight: bold;
+}
+
+.ScriptElements-SceneHeading
+{
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: inline-block;
+    width: 100%;
+}
+
+.ScriptElements-Action
+{
+    margin-top: 0.5em;
+    line-height: 1.5rem;
+}
+
+.ScriptElements-Character
+{
+    text-align: center;
+    text-transform: uppercase;
+    margin-top: 1em;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.ScriptElements-Dialogue
+{
+    max-width: 60%;
+    margin: 0 auto;
+    line-height: 1.5rem;
+}
+
+.ScriptElements-Transition
+{
+    text-transform: uppercase;
+    margin-top: 1em;
+}
+
+.ScriptElements-Subheader
+{
+    text-transform: uppercase;
+    font-weight: normal;
+}
+
+.SE-container
+{
+    padding: 1rem;
+    width: 100%;
+    height: 100%;
+    font-family: Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.SE-title-container
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.SE-title
+{
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    font-size: 1.5rem;
+    border-bottom: 1px solid #CCCCCCFF;
+}
+
+.SE-MP-title
+{
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #D1D5DB;
+}
+
+.SE-page-container
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 80vh;
+    padding: 1rem;
+    background-color: transparent;
+}
+
+.SE-VP-line-container
+{
+    min-height: 1.5rem;
+    line-height: 1.5rem;
+    cursor: text;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+}
+
+.SE-VP-line
+{
+    min-height: 1.5rem;
+    line-height: 1.5rem;
+    padding: 0;
+    margin: 0;
+}
+
+.SE-VP-line-active
+{
+    width: 100%;
+    background-color: transparent !important;
+    border: none;
+    outline: none;
+    box-shadow: none !important;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    resize: none;
+    overflow: hidden;
+    min-height: 1.5rem;
+    line-height: 1.5rem;
+}
+
+.SE-VP-bottom
+{
+    min-height: 1.5rem;
+    line-height: 1.5rem;
+    padding: 0;
+    margin: 0;
+    background-color: #6B7280;
+}
+
+.SE-VP-sceneHeading-container
+{
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: inline-block;
+    width: 100%;
+}
+
+.SE-SP-textarea
+{
+    width: 100%;
+    height: 100%;
+    min-height: 80vh;
+    resize: none;
+    font-family: inherit;
+    font-size: inherit;
+    background-color: transparent !important;
+    border: none;
+    outline: none;
+    box-shadow: none !important;
+}
+
+.SE-MP-ITEM-container
+{
+    margin-bottom: 1rem;
+}
+
+.SE-MP-ITEM-label
+{
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #D1D5DB;
+    font-weight: bold;
+}
+
+.SE-MP-ITEM-input
+{
+    width: 100%;
+    padding: 0.5rem;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 0.25rem;
+    font-family: inherit;
+}

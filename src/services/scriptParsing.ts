@@ -1,4 +1,4 @@
-import { Scene, ScriptElementType, ScriptMetadata } from "../models/ScriptModel";
+import { isScene, Scene, Script, ScriptElementType, ScriptMetadata } from "../models/ScriptModel";
 import { App, TFile, TFolder } from "obsidian";
 
 /*
@@ -31,6 +31,47 @@ export function getCharacterList(app: App, metadata: ScriptMetadata, characterFo
         .map(file => (file instanceof TFile) ? file.basename : "");
 }
 
+export function parseFull(metadata: ScriptMetadata, content: string): Script {
+    const result: Script = {
+        title: metadata.title,
+        subtitle: metadata.subtitle,
+        writers: metadata.writers,
+        prod_company: metadata.prod_company,
+        date: metadata.date,
+        scenes: []
+    };
+
+    let sceneId = 1;
+    let currentScene: Scene | null = null;
+    const lines = content.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+    for (const line of lines) {
+        const current = parseLine(line);
+        if (isScene(current)) {
+            if (currentScene) {
+                currentScene.id = sceneId;
+                result.scenes.push(currentScene);
+                sceneId++;
+            }
+            currentScene = current;
+        }
+        else if (currentScene) {
+            if (!currentScene.elements) {
+                currentScene.elements = [];
+            }
+            currentScene.elements.push(current);
+        }
+        else {
+            currentScene = { id: 0, heading: "", elements: [] };
+            currentScene.elements.push(current);
+        }
+    }
+
+    if (currentScene) {
+        currentScene.id = sceneId;
+        result.scenes.push(currentScene);
+    }
+    return result;
+}
 
 /*
 *
@@ -77,7 +118,7 @@ export function parseMetadata(content: string): { metadata: ScriptMetadata; cont
                     case 'subtitle':
                         metadata.subtitle = value; // Optional subtitle
                         break;
-                    case 'author':
+                    case 'writers':
                         metadata.writers = value;
                         break;
                     case 'prod_company':

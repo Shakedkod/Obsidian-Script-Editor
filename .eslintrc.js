@@ -8,5 +8,7 @@ module.exports = {
       2,
       { args: "all", argsIgnorePattern: "^_" },
     ],
+    "no-useless-escape": "off",
+    "@typescript-eslint/no-empty-function": "off",
   },
 };

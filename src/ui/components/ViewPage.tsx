@@ -246,7 +246,7 @@ export default function ViewPage(
     }
 
     return (
-        <div className="SE-VP-container">
+        <div className="SE-page-container">
             {lines.map((line, i) => (
                 <div
                     key={i}
@@ -295,7 +295,7 @@ export default function ViewPage(
                     setTimeout(() => setActiveLine(lines.length), 0);
                 }}
             >
-                <div className="SE-VP-bottom">
+                <div className="SE-VP-bottom" style={{backgroundColor: "transparent"}}>
                     {"\u00A0"}
                 </div>
             </div>

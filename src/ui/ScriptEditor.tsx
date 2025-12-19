@@ -8,16 +8,16 @@ import ViewPage from "./components/ViewPage";
 import SourcePage from "./components/SourcePage";
 import MetadataPage from "./components/MetadataPage";
 
-interface Props
-{
+interface Props {
     app: App;
     file: TFile;
     setData: (data: string) => void;
     characterFolder: string;
     openCharacterNote: (name: string) => void;
+    setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
 }
 
-function _ScriptEditor({app, file, setData, characterFolder, openCharacterNote}: Props): JSX.Element
+function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): JSX.Element 
 {
     // Text and file vars
     const [fullFile, setFullFile] = useState("");
@@ -38,11 +38,31 @@ function _ScriptEditor({app, file, setData, characterFolder, openCharacterNote}:
     const [characterQuery, setCharacterQuery] = useState("");
     const [filteredCharacters, setFilteredCharacters] = useState<string[]>([]);
 
+    // Set mode callback
+    useEffect(() => {
+        setModeCallback(setMode);
+    }, [setModeCallback]);
+
     // Inner functions
-    function updateFullText(newMetadata: ScriptMetadata, newScriptContent: string): void
+    function updateFullText(newMetadata: ScriptMetadata, newScriptContent: string): void 
     {
-        const frontmatter = stringifyYaml(newMetadata);
-        const newFullText = frontmatter + newScriptContent;
+        // Only add frontmatter if there's actual metadata content
+        const hasMetadata = Object.values(newMetadata).some(value => value !== "");
+
+        let newFullText: string;
+        if (hasMetadata) {
+            const frontmatter = stringifyYaml(newMetadata);
+            newFullText = `---\n${frontmatter}---\n${newScriptContent}`;
+        } else {
+            newFullText = newScriptContent;
+        }
+
+        setFullFile(newFullText);
+        setData(newFullText);
+    }
+
+    function updateSource(newFullText: string): void
+    {
         setFullFile(newFullText);
         setData(newFullText);
     }
@@ -58,14 +78,9 @@ function _ScriptEditor({app, file, setData, characterFolder, openCharacterNote}:
         setMetadata(parsed.metadata);
         setScriptContent(parsed.contentWithoutFrontmatter);
     }, [fullFile]);
-    
-    useEffect(() =>
-    {
-        setData(fullFile);
-    }, [fullFile]);
 
-    useEffect(() =>
-    {
+
+    useEffect(() => {
         setFilteredCharacters(
             getCharacterList(app, metadata, characterFolder)
                 .filter(c => c.toLowerCase().startsWith(characterQuery.toLowerCase()))
@@ -90,9 +105,18 @@ function _ScriptEditor({app, file, setData, characterFolder, openCharacterNote}:
 
             {/* Page */}
             {mode === "metadata"
-                ? <MetadataPage/>
+                ? <MetadataPage 
+                    metadata={metadata}
+                    updateMetadata={(newMetadata: ScriptMetadata) => {
+                        setMetadata(newMetadata);
+                        updateFullText(newMetadata, scriptContent);
+                    }}
+                />
                 : (mode === "source")
-                    ? <SourcePage/>
+                    ? <SourcePage
+                        fullText={fullFile}
+                        updateSource={updateSource}
+                    />
                     : (
                         <ViewPage
                             app={app}
@@ -117,8 +141,7 @@ function _ScriptEditor({app, file, setData, characterFolder, openCharacterNote}:
 }
 
 
-export default function ScriptEditor({app, file, setData, characterFolder, openCharacterNote}: Props): () => JSX.Element
-{
+export default function ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): () => JSX.Element {
     return () => (
         <>
             <_ScriptEditor
@@ -126,6 +149,7 @@ export default function ScriptEditor({app, file, setData, characterFolder, openC
                 file={file}
                 setData={setData}
                 characterFolder={characterFolder}
+                setModeCallback={setModeCallback}
                 openCharacterNote={openCharacterNote}
             />
         </>
