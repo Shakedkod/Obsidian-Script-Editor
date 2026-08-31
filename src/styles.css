@@ -26,8 +26,13 @@
     font-weight: bold;
 }
 
-.ScriptElements-SceneHeading
-{
+.SE-cm-host .cm-content {
+    padding-left: 3em;
+    padding-right: 3em;
+}
+
+.cm-script-scene {
+    position: relative;
     font-weight: bold;
     text-transform: uppercase;
     margin-top: 1em;
@@ -36,14 +41,22 @@
     width: 100%;
 }
 
-.ScriptElements-Action
-{
-    margin-top: 0.5em;
-    line-height: 1.5rem;
+.cm-script-scene::before,
+.cm-script-scene::after {
+    content: attr(data-scene-number);
+    position: absolute;
+    top: 0;
+    color: var(--text-muted);
+    font-weight: normal;
+    text-transform: none;
+    pointer-events: none;
 }
 
-.ScriptElements-Character
-{
+.cm-script-scene::before { left: -2.5em; }
+.cm-script-scene::after  { right: -2.5em; }
+
+.cm-script-character 
+{ 
     text-align: center;
     text-transform: uppercase;
     margin-top: 1em;
@@ -52,24 +65,28 @@
     cursor: pointer;
 }
 
-.ScriptElements-Dialogue
+.cm-script-dialogue 
 {
     max-width: 60%;
     margin: 0 auto;
     line-height: 1.5rem;
 }
 
-.ScriptElements-Transition
+.cm-script-transition
 {
     text-transform: uppercase;
     margin-top: 1em;
 }
 
-.ScriptElements-Subheader
+.cm-script-subheader 
 {
     text-transform: uppercase;
     font-weight: normal;
 }
+
+.cm-script-bold { font-weight: bold; }
+.cm-script-marker-visible { opacity: 0.6; }
+.cm-script-italic { font-style: italic; }
 
 .SE-container
 {

@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { getCharacterList, parseMetadata } from "../services/scriptParsing";
 import { App, stringifyYaml, TFile } from "obsidian";
 import { getTextDirection, i18n } from "../i18n/i18n";
-import ViewPage from "./components/ViewPage";
-import SourcePage from "./components/SourcePage";
+import ScriptViewWriter from "./components/ScriptWriter";
 import MetadataPage from "./components/MetadataPage";
 import { ScriptMetadata } from "src/models/ScriptMetadata";
 
@@ -113,29 +112,17 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
                         updateFullText(newMetadata, scriptContent);
                     }}
                 />
-                : (mode === "source")
-                    ? <SourcePage
-                        fullText={fullFile}
-                        updateSource={updateSource}
-                    />
-                    : (
-                        <ViewPage
-                            app={app}
-                            filePath={file.path}
-                            lines={scriptContent.split("\n")}
-                            setScriptContent={setScriptContent}
-                            updateFullText={(newContent: string) => updateFullText(metadata, newContent)}
-                            setCharacterSuggestionsOpen={setCharacterSuggestionsOpen}
-                            setSuggestionAnchor={setSuggestionAnchor}
-                            characterSuggestionOpen={characterSuggestionsOpen}
-                            characters={filteredCharacters}
-                            characterQuery={characterQuery}
-                            setCharacterQuery={setCharacterQuery}
-                            openCharacterNote={openCharacterNote}
-                            metadata={metadata}
-                            characterFolder={characterFolder}
-                        />
-                    )
+                : <ScriptViewWriter 
+                    key = {mode}
+                    value = {(mode === "source") ? fullFile : scriptContent}
+                    onChange = {(newText: string) => {
+                        if (mode === "source")
+                            updateSource(newText)
+                        else
+                            updateFullText(metadata, newText);
+                    }}
+                    livePreview = {mode === "preview"}
+                />
             }
         </div>
     );

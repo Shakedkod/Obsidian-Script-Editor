@@ -29,5 +29,5 @@ export interface Script
 
 export function isScene(obj: unknown): obj is Scene
 {
-    return obj && (typeof obj === "object") && ("id" in obj) && ("heading" in obj) && ("elements" in obj);
+    return typeof obj === "object" && obj !== null && ("id" in obj) && ("heading" in obj) && ("elements" in obj);
 }

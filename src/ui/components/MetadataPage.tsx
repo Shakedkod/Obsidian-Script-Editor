@@ -5,14 +5,13 @@ interface MetadataItemProps
 {
     field: string;
     inherited?: boolean;
-    type: string | Date | string[];
     data: string;
     handleMetadataChange: (key: string, value: string) => void;
     label: string;
     placeholder: string;
 }
 
-function MetadataItem({ field, inherited, type, data, handleMetadataChange, label, placeholder }: MetadataItemProps): JSX.Element
+function MetadataItem({ field, inherited, data, handleMetadataChange, label, placeholder }: MetadataItemProps): JSX.Element
 {
     //if (!inherited)
         return (
