@@ -15,10 +15,10 @@ function MetadataItem({ field, inherited, data, handleMetadataChange, label, pla
 {
     //if (!inherited)
         return (
-            <div className="SE-MP-ITEM-container" key={field}>
-                <label className="SE-MP-ITEM-label">{label}:</label>
+            <div className="se-field" key={field}>
+                <label className="se-field-label">{label}:</label>
                 <input
-                    className="SE-MP-ITEM-input"
+                    className="se-field-input"
                     type="text"
                     value={data}
                     onChange={(e) => handleMetadataChange(field, e.target.value)}
@@ -28,10 +28,10 @@ function MetadataItem({ field, inherited, data, handleMetadataChange, label, pla
         );
 
     //return (
-    //    <div className="SE-MP-ITEM-container" key={field}>
-    //        <label className="SE-MP-ITEM-label">{label}:</label>
+    //    <div className="se-field" key={field}>
+    //        <label className="se-field-label">{label}:</label>
     //        <input
-    //            className="SE-MP-ITEM-input-disabled"
+    //            className="se-field-input-disabled"
     //            type="text"
     //            value={data}
     //            onChange={(e) => handleMetadataChange(field, e.target.value)}
@@ -51,9 +51,9 @@ interface MetadataPageProps
 export default function MetadataPage({ metadata, updateMetadata }: MetadataPageProps): JSX.Element
 {
     return (
-        <div className="SE-page-container">
+        <div className="se-page">
             {/* Actual Script Items */}
-            <section className="SE-MP-section">
+            <section className="se-meta-section">
                 <MetadataItem
                     field="title"
                     inherited={false}
@@ -97,7 +97,7 @@ export default function MetadataPage({ metadata, updateMetadata }: MetadataPageP
             </section>
 
             {/* Plugin Metadata Items */}
-            <section className="SE-MP-section">
+            <section className="se-meta-section">
                 <MetadataItem
                     field="characterFolder"
                     inherited={metadata.characterFolder === "inherit"}

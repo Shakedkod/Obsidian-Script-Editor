@@ -1,10 +1,10 @@
 {
-  "id": "react-starter",
-  "name": "React Starter",
-  "description": "Obsidian + ReactJS",
-  "version": "0.0.0",
-  "author": "Liam Cain",
-  "authorUrl": "https://github.com/liamcain/",
+  "id": "script-editor",
+  "name": "Script Editor",
+  "description": "A script editor for Obsidian that provides a live preview of your script as you write it and a pdf export according to the standard guidelines.",
+  "version": "0.5.0",
+  "author": "ShakedKod",
+  "authorUrl": "https://github.com/ShakedKod/",
   "isDesktopOnly": true,
   "minAppVersion": "0.10.8"
 }

@@ -13,7 +13,7 @@ export const DEFAULT_DATA = "";
 export class ScriptEditorView extends TextFileView
 {
     data: string = DEFAULT_DATA;
-    private root: React.ReactElement;
+    private root: React.ReactElement | undefined;
     private hasUnsavedChanges = false;
     private currentMode: "preview" | "source" | "metadata" = "preview";
     public setMode: (mode: "preview" | "source" | "metadata") => void;
@@ -61,19 +61,19 @@ export class ScriptEditorView extends TextFileView
                 });
             });
 
-        //menu.addItem((item) => {
-        //    item.setTitle(i18n.t('menu.exportToPdf'));
-        //    item.setIcon("arrow-right-from-line");
-        //    item.setSection("action");
-        //    item.onClick(async () => {
-        //        try {
-        //            await this.exportToPDF();
-        //            new Notice("Script exported to PDF successfully.");
-        //        } catch (error) {
-        //            new Notice("Failed to export script: " + error.message);
-        //        }
-        //    });
-        //});
+        menu.addItem((item) => {
+            item.setTitle(i18n.t('menu.exportToPdf'));
+            item.setIcon("arrow-right-from-line");
+            item.setSection("action");
+            item.onClick(async () => {
+                try {
+                    await this.exportToPDF();
+                    new Notice("Script exported to PDF successfully.");
+                } catch (error) {
+                    new Notice("Failed to export script: " + (error instanceof Error ? error.message : String(error)));
+                }
+            });
+        });
 
         super.onPaneMenu(menu, source);
     }
@@ -87,7 +87,7 @@ export class ScriptEditorView extends TextFileView
 
         this.root = React.createElement(ScriptEditor({
             app: this.app,
-            file: this.file,
+            file: this.file ?? new TFile(),
             setData: (data: string) => this.setViewData(data, false),
             setModeCallback: (cb) => {
                 this.setMode = cb;

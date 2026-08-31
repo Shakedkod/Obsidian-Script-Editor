@@ -62,11 +62,26 @@ function getDirection(text: string, dir: "ltr" | "rtl"): "left" | "right" {
     return (trimmed == "cm-script-transition") ? (dir === "ltr" ? "right" : "left") : (dir === "ltr" ? "left" : "right");
 }
 
-function buildDecorations(view: EditorView): DecorationSet 
-{
+export type PreviewBuild = {
+    decorations: DecorationSet;
+    atomicRanges: DecorationSet;
+};
+
+export const EMPTY_PREVIEW: PreviewBuild = {
+    decorations: Decoration.none,
+    atomicRanges: Decoration.none,
+};
+
+function clampPos(doc: Text, pos: number): number {
+    return Number.isFinite(pos) ? Math.max(0, Math.min(doc.length, pos)) : 0;
+}
+
+function buildDecorations(view: EditorView): PreviewBuild {
     const builder = new RangeSetBuilder<Decoration>();
+    const atomicBuilder = new RangeSetBuilder<Decoration>();
     const doc = view.state.doc;
-    const cursor = view.state.selection.main.head;
+
+    const cursor = clampPos(doc, view.state.selection.main.head);
     const cursorLine = doc.lineAt(cursor).number;
 
     const sceneNumbers = view.state.field(sceneNumberField, false) ?? new Map<number, number>();
@@ -76,11 +91,23 @@ function buildDecorations(view: EditorView): DecorationSet
     // Collect the set of line numbers actually visible — de-duplicated,
     // since visibleRanges can report multiple chunks touching the same line.
     const visibleLineNumbers = new Set<number>();
-    for (const { from, to } of view.visibleRanges) {
-        const startLine = doc.lineAt(from).number;
-        const endLine = doc.lineAt(to).number;
+    const ranges = view.visibleRanges.length ? view.visibleRanges : [{ from: 0, to: doc.length }];
+    for (const { from, to } of ranges) {
+        const startLine = doc.lineAt(clampPos(doc, Math.min(from, to))).number;
+        const endLine = doc.lineAt(clampPos(doc, Math.max(from, to))).number;
         for (let n = startLine; n <= endLine; n++) visibleLineNumbers.add(n);
     }
+
+    // Add a replacement decoration to both the visible decoration set and the
+    // atomic-ranges set. Only replacement ranges should be atomic — line and
+    // mark decorations must stay cursor-traversable, otherwise arrow-key
+    // movement computes invalid positions and corrupts the view.
+    const addReplace = (from: number, to: number, spec: Parameters<typeof Decoration.replace>[0] = {}) => {
+        if (from < 0 || to > doc.length || to <= from) return;
+        const deco = Decoration.replace(spec);
+        builder.add(from, to, deco);
+        atomicBuilder.add(from, to, deco);
+    };
 
     for (const lineNo of Array.from(visibleLineNumbers).sort((a, b) => a - b)) {
         const line = doc.line(lineNo);
@@ -106,9 +133,7 @@ function buildDecorations(view: EditorView): DecorationSet
 
         if (rule && !cursorOnLine && rule.markerLength > 0) {
             const markerEnd = Math.min(line.from + rule.markerLength, line.to);
-            if (markerEnd > line.from) {
-                builder.add(line.from, markerEnd, Decoration.replace({}));
-            }
+            addReplace(line.from, markerEnd);
         }
 
         const boldRegex = /\*\*(.+?)\*\*/g;
@@ -116,15 +141,15 @@ function buildDecorations(view: EditorView): DecorationSet
         while ((match = boldRegex.exec(text))) {
             const start = line.from + match.index;
             const end = start + match[0].length;
-            if (end > line.to) break; // defensive: never trust regex math past the line
+            if (end > line.to) break;
             const cursorInside = cursorOnLine && cursor >= start && cursor <= end;
 
             if (cursorInside) {
                 builder.add(start, end, Decoration.mark({ class: "cm-script-bold cm-script-marker-visible" }));
             } else {
-                builder.add(start, start + 2, Decoration.replace({}));
+                addReplace(start, start + 2);
                 builder.add(start + 2, end - 2, Decoration.mark({ class: "cm-script-bold" }));
-                builder.add(end - 2, end, Decoration.replace({}));
+                addReplace(end - 2, end);
             }
         }
 
@@ -133,15 +158,15 @@ function buildDecorations(view: EditorView): DecorationSet
         while ((match = italicRegex.exec(text))) {
             const start = line.from + match.index;
             const end = start + match[0].length;
-            if (end > line.to) break; // defensive: never trust regex math past the line
+            if (end > line.to) break;
             const cursorInside = cursorOnLine && cursor >= start && cursor <= end;
 
             if (cursorInside) {
                 builder.add(start, end, Decoration.mark({ class: "cm-script-italic cm-script-marker-visible" }));
             } else {
-                builder.add(start, start + 1, Decoration.replace({}));
+                addReplace(start, start + 1);
                 builder.add(start + 1, end - 1, Decoration.mark({ class: "cm-script-italic" }));
-                builder.add(end - 1, end, Decoration.replace({}));
+                addReplace(end - 1, end);
             }
         }
 
@@ -150,40 +175,60 @@ function buildDecorations(view: EditorView): DecorationSet
         while ((match = mathRegex.exec(text))) {
             const start = line.from + match.index;
             const end = start + match[0].length;
-            if (end > line.to) break; // defensive: never trust regex math past the line
+            if (end > line.to) break;
             const cursorInside = cursorOnLine && cursor >= start && cursor <= end;
 
             if (cursorInside) {
                 builder.add(start, end, Decoration.mark({ class: "cm-script-math cm-script-marker-visible" }));
             } else {
                 const display = match[0].startsWith("$$");
-                builder.add(start, end, Decoration.replace({
-                    widget: new MathWidget(match[1], display),
-                }));
+                addReplace(start, end, { widget: new MathWidget(match[1], display) });
             }
         }
     }
 
-    return builder.finish();
+    return {
+        decorations: builder.finish(),
+        atomicRanges: atomicBuilder.finish(),
+    };
 }
 
-export const scriptLivePreview = ViewPlugin.fromClass(
-    class {
-        decorations: DecorationSet;
+class ScriptLivePreviewPlugin {
+    decorations: DecorationSet = Decoration.none;
+    atomicRanges: DecorationSet = Decoration.none;
 
-        constructor(view: EditorView) {
-            this.decorations = buildDecorations(view);
-        }
+    constructor(view: EditorView) {
+        this.setBuild(this.safeBuild(view));
+    }
 
-        update(update: ViewUpdate) {
-            if (update.docChanged || update.selectionSet || update.viewportChanged) {
-                try {
-                    this.decorations = buildDecorations(update.view);
-                } catch (e) {
-                    console.error("scriptLivePreview decoration error:", e);
-                }
-            }
+    update(update: ViewUpdate) {
+        if (update.docChanged || update.selectionSet || update.viewportChanged) {
+            this.setBuild(this.safeBuild(update.view));
         }
-    },
-    { decorations: (v) => v.decorations }
-);
+    }
+
+    private setBuild(build: PreviewBuild): void {
+        this.decorations = build.decorations;
+        this.atomicRanges = build.atomicRanges;
+    }
+
+    private safeBuild(view: EditorView): PreviewBuild {
+        try {
+            return buildDecorations(view);
+        } catch (e) {
+            console.error("scriptLivePreview decoration error:", e);
+            // Never reuse stale ranges — a failed build must yield empty sets
+            // so cursor movement can't trip over out-of-date positions.
+            return EMPTY_PREVIEW;
+        }
+    }
+}
+
+export const scriptLivePreview = ViewPlugin.fromClass(ScriptLivePreviewPlugin, {
+    decorations: v => v.decorations,
+    provide: (plugin) =>
+        EditorView.atomicRanges.of((view) => {
+            const instance = view.plugin(plugin);
+            return instance ? instance.atomicRanges : Decoration.none;
+        }),
+});

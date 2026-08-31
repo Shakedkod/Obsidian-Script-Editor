@@ -1,8 +1,9 @@
 import * as React from "react";
 import { useEffect, useRef } from "react";
-import { EditorState, Compartment } from "@codemirror/state";
+import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete"
 import { sceneNumberField, scriptLivePreview } from "./ViewMode";
 
 interface Props {
@@ -19,6 +20,7 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
     const lastEmitted = useRef(value);
+    const applyingExternal = useRef(false);
 
     useEffect(() => {
         if (!hostRef.current) return;
@@ -28,12 +30,13 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
                 doc: value,
                 extensions: [
                     history(),
-                    keymap.of([...defaultKeymap, ...historyKeymap]),
+                    closeBrackets(),
+                    keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
                     EditorView.lineWrapping,
                     sceneNumberField,
                     previewCompartment.of(livePreview ? [scriptLivePreview] : []),
                     EditorView.updateListener.of((update) => {
-                        if (update.docChanged) {
+                        if (update.docChanged && !applyingExternal.current) {
                             const text = update.state.doc.toString();
                             lastEmitted.current = text;
                             onChangeRef.current(text);
@@ -45,21 +48,40 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
         });
 
         viewRef.current = view;
-        return () => view.destroy();
+        return () => {
+            view.destroy();
+            viewRef.current = null;
+        };
     }, []);
 
     useEffect(() => {
         const view = viewRef.current;
         if (!view) return;
-        if (value === lastEmitted.current) return;
 
+        const nextValue = value ?? "";
+        if (nextValue === lastEmitted.current) return;
+
+        const docLen = view.state.doc.length;
         const currentDoc = view.state.doc.toString();
-        if (currentDoc === value) return;
+        if (currentDoc === nextValue) {
+            lastEmitted.current = nextValue;
+            return;
+        }
 
-        view.dispatch({
-            changes: { from: 0, to: currentDoc.length, insert: value },
-        });
-        lastEmitted.current = value;
+        // Replace the whole document but keep the selection clamped to the new
+        // length so cursor movement never references a stale position.
+        const nextHead = Math.min(view.state.selection.main.head, nextValue.length);
+
+        applyingExternal.current = true;
+        try {
+            view.dispatch({
+                changes: { from: 0, to: docLen, insert: nextValue },
+                selection: EditorSelection.cursor(nextHead),
+            });
+            lastEmitted.current = nextValue;
+        } finally {
+            applyingExternal.current = false;
+        }
     }, [value]);
 
     useEffect(() => {
@@ -68,5 +90,5 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
         });
     }, [livePreview]);
 
-    return <div className="SE-editable-area" ref={hostRef} />;
+    return <div className="se-editor" ref={hostRef} />;
 }

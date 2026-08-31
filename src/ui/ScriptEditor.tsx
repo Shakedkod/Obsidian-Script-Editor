@@ -88,14 +88,14 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
     }, [characterQuery]);
 
     return (
-        <div className="SE-container">
+        <div className="se-root">
             {/* Title */}
-            <div className="SE-title-container" dir={getTextDirection(metadata.title)}>
-                <h2 className="SE-title">
+            <div className="se-header" dir={getTextDirection(metadata.title)}>
+                <h2 className="se-title">
                     {metadata.title || "Untitled Script"} {metadata.subtitle && `- ${metadata.subtitle}`}
                 </h2>
                 {mode === "metadata" && (
-                    <h2 className="SE-MP-title">
+                    <h2 className="se-meta-title">
                         {i18n.t("scriptEditor.properties")}
                     </h2>
                 )}
