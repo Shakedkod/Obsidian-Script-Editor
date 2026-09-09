@@ -93,20 +93,37 @@ function buildDecorations(view: EditorView): PreviewBuild {
     const visibleLineNumbers = new Set<number>();
     const ranges = view.visibleRanges.length ? view.visibleRanges : [{ from: 0, to: doc.length }];
     for (const { from, to } of ranges) {
-        const startLine = doc.lineAt(clampPos(doc, Math.min(from, to))).number;
-        const endLine = doc.lineAt(clampPos(doc, Math.max(from, to))).number;
-        for (let n = startLine; n <= endLine; n++) visibleLineNumbers.add(n);
+        const safeFrom = clampPos(doc, Math.min(from, to));
+        const safeTo = clampPos(doc, Math.max(from, to));
+
+        const startLine = doc.lineAt(safeFrom).number;
+        const endLine = doc.lineAt(
+            safeTo === doc.length && doc.length > 0
+                ? doc.length - 1
+                : safeTo
+        ).number;
+
+        for (let n = startLine; n <= endLine; n++) {
+            visibleLineNumbers.add(n);
+        }
     }
 
     // Add a replacement decoration to both the visible decoration set and the
     // atomic-ranges set. Only replacement ranges should be atomic — line and
     // mark decorations must stay cursor-traversable, otherwise arrow-key
     // movement computes invalid positions and corrupts the view.
-    const addReplace = (from: number, to: number, spec: Parameters<typeof Decoration.replace>[0] = {}) => {
+    const addReplace = (
+        from: number,
+        to: number,
+        spec: Parameters<typeof Decoration.replace>[0] = {}
+    ) => {
         if (from < 0 || to > doc.length || to <= from) return;
+
         const deco = Decoration.replace(spec);
         builder.add(from, to, deco);
-        atomicBuilder.add(from, to, deco);
+
+        // Disable this initially. Re-enable only after testing.
+        // atomicBuilder.add(from, to, deco);
     };
 
     for (const lineNo of Array.from(visibleLineNumbers).sort((a, b) => a - b)) {
@@ -224,11 +241,9 @@ class ScriptLivePreviewPlugin {
     }
 }
 
-export const scriptLivePreview = ViewPlugin.fromClass(ScriptLivePreviewPlugin, {
-    decorations: v => v.decorations,
-    provide: (plugin) =>
-        EditorView.atomicRanges.of((view) => {
-            const instance = view.plugin(plugin);
-            return instance ? instance.atomicRanges : Decoration.none;
-        }),
-});
+export const scriptLivePreview = ViewPlugin.fromClass(
+    ScriptLivePreviewPlugin,
+    {
+        decorations: v => v.decorations,
+    }
+);

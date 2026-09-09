@@ -26,6 +26,7 @@
     padding-right: 3em;
     padding-bottom: 20rem;
     caret-color: var(--text-normal);
+    border: transparent;
 }
 
 /* ---------- Script line decorations (applied per line by ViewMode) ---------- */
