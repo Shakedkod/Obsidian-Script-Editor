@@ -29,6 +29,19 @@
     border: transparent;
 }
 
+.se-editor .cm-editor,
+.se-editor .cm-editor.cm-focused {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.se-editor .cm-scroller,
+.se-editor .cm-content {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* ---------- Script line decorations (applied per line by ViewMode) ---------- */
 .cm-script-scene {
     position: relative;
@@ -36,30 +49,38 @@
     font-size: 1.15em;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-top: 1.6em;
-    margin-bottom: 0.5em;
-    padding-bottom: 0.15em;
+    line-height: 1.5;
+    border-top: 2.2em solid transparent;
+    padding-bottom: 0.4em;
     border-bottom: 1px solid var(--background-modifier-border);
-    display: inline-block;
-    width: 100%;
 }
+
 .cm-script-scene::before,
 .cm-script-scene::after {
     content: attr(data-scene-number);
     position: absolute;
-    top: 0;
+    top: 0;                 /* top of padding box = first line of heading text */
+    line-height: inherit;
     color: var(--text-muted);
     font-weight: normal;
+    font-size: 0.9em;
+    letter-spacing: normal;
     text-transform: none;
     pointer-events: none;
 }
+
 .cm-script-scene::before { left: -2.5em; }
 .cm-script-scene::after  { right: -2.5em; }
+
+/* space BELOW the divider, before the first line of the scene */
+.cm-script-scene + .cm-line {
+    padding-top: 1em;
+}
 
 .cm-script-character {
     text-align: center;
     text-transform: uppercase;
-    margin-top: 1em;
+    padding-top: 1em;
     font-size: 1.2em;
     font-weight: bold;
     cursor: pointer;
@@ -71,7 +92,7 @@
 }
 .cm-script-transition {
     text-transform: uppercase;
-    margin-top: 1em;
+    padding-top: 1em;
 }
 .cm-script-subheader {
     text-transform: uppercase;

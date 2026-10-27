@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCharacterList, parseMetadata } from "../services/scriptParsing";
 import { App, stringifyYaml, TFile } from "obsidian";
 import { getTextDirection, i18n } from "../i18n/i18n";
@@ -16,8 +16,7 @@ interface Props {
     setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
 }
 
-function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): JSX.Element 
-{
+function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): JSX.Element {
     // Text and file vars
     const [fullFile, setFullFile] = useState("");
     const [scriptContent, setScriptContent] = useState("");
@@ -37,6 +36,7 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
     const [characterSuggestionSelectedIndex, setCharacterSuggestionSelectedIndex] = useState(0);
     const [characterQuery, setCharacterQuery] = useState("");
     const [filteredCharacters, setFilteredCharacters] = useState<string[]>([]);
+    const isInternalUpdate = useRef(false);
 
     // Set mode callback
     useEffect(() => {
@@ -44,25 +44,21 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
     }, [setModeCallback]);
 
     // Inner functions
-    function updateFullText(newMetadata: ScriptMetadata, newScriptContent: string): void 
-    {
-        // Only add frontmatter if there's actual metadata content
+    function updateFullText(newMetadata: ScriptMetadata, newScriptContent: string): void {
         const hasMetadata = Object.values(newMetadata).some(value => value !== "");
 
-        let newFullText: string;
-        if (hasMetadata) {
-            const frontmatter = stringifyYaml(newMetadata);
-            newFullText = `---\n${frontmatter}---\n${newScriptContent}`;
-        } else {
-            newFullText = newScriptContent;
-        }
+        const newFullText = hasMetadata
+            ? `---\n${stringifyYaml(newMetadata)}---\n${newScriptContent}`
+            : newScriptContent;
+
+        isInternalUpdate.current = true;
 
         setFullFile(newFullText);
+        setScriptContent(newScriptContent); // preserve exact editor text
         setData(newFullText);
     }
 
-    function updateSource(newFullText: string): void
-    {
+    function updateSource(newFullText: string): void {
         setFullFile(newFullText);
         setData(newFullText);
     }
@@ -75,8 +71,14 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
     // Parse text into metadata and content whenever fullText changes
     useEffect(() => {
         const parsed = parseMetadata(fullFile);
+
         setMetadata(parsed.metadata);
-        setScriptContent(parsed.contentWithoutFrontmatter);
+
+        if (!isInternalUpdate.current) {
+            setScriptContent(parsed.contentWithoutFrontmatter);
+        }
+
+        isInternalUpdate.current = false;
     }, [fullFile]);
 
 
@@ -105,23 +107,23 @@ function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, o
 
             {/* Page */}
             {mode === "metadata"
-                ? <MetadataPage 
+                ? <MetadataPage
                     metadata={metadata}
                     updateMetadata={(newMetadata: ScriptMetadata) => {
                         setMetadata(newMetadata);
                         updateFullText(newMetadata, scriptContent);
                     }}
                 />
-                : <ScriptViewWriter 
-                    key = {mode}
-                    value = {(mode === "source") ? fullFile : scriptContent}
-                    onChange = {(newText: string) => {
+                : <ScriptViewWriter
+                    key={mode}
+                    value={(mode === "source") ? fullFile : scriptContent}
+                    onChange={(newText: string) => {
                         if (mode === "source")
                             updateSource(newText)
                         else
                             updateFullText(metadata, newText);
                     }}
-                    livePreview = {mode === "preview"}
+                    livePreview={mode === "preview"}
                 />
             }
         </div>
