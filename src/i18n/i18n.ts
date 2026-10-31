@@ -1,129 +1,79 @@
 import { translations } from "./translations";
-import { LANGUAGE_CONFIGS } from './languages';
-import { SupportedLanguage, LanguageConfig } from './types';
+import { LANGUAGE_CONFIGS } from "./languages";
+import { SupportedLanguage, LanguageConfig, Translations } from "./types";
 
-export class I18n
-{
-    private currentLanguage: SupportedLanguage = 'en';
-    private fallbackLanguage: SupportedLanguage = 'en';
+function resolveNestedString(source: unknown, keys: string[]): string | undefined {
+    let current: unknown = source;
+    for (const key of keys) {
+        if (typeof current === "object" && current !== null && key in current) {
+            current = (current as Record<string, unknown>)[key];
+        } else {
+            return undefined;
+        }
+    }
+    return typeof current === "string" ? current : undefined;
+}
 
-    constructor(language?: SupportedLanguage)
-    {
-        if (language)
+export class I18n {
+    private currentLanguage: SupportedLanguage = "en";
+    private fallbackLanguage: SupportedLanguage = "en";
+
+    constructor(language?: SupportedLanguage) {
+        if (language) {
             this.setLanguage(language);
+        }
     }
 
-    setLanguage(language: SupportedLanguage): void
-    {
-        if (translations[language])
+    setLanguage(language: SupportedLanguage): void {
+        if (translations[language]) {
             this.currentLanguage = language;
-        else
-        {
-            console.warn(`Language ${language} not supported, falling back to ${this.fallbackLanguage}`);
+        } else {
             this.currentLanguage = this.fallbackLanguage;
         }
     }
 
-    setLanguageFromString(language: string): void 
-    {
-        const lang = language as SupportedLanguage;
-        if (translations[lang])
-            this.currentLanguage = lang;
-        else
-        {
-            console.warn(`Language ${lang} not supported, falling back to ${this.fallbackLanguage}`);
-            this.currentLanguage = this.fallbackLanguage;
-        }
+    setLanguageFromString(language: string): void {
+        this.setLanguage(language as SupportedLanguage);
     }
 
-    getCurrentLanguage(): SupportedLanguage
-    {
+    getCurrentLanguage(): SupportedLanguage {
         return this.currentLanguage;
     }
 
-    getLanguageConfig(): LanguageConfig
-    {
+    getLanguageConfig(): LanguageConfig {
         return LANGUAGE_CONFIGS[this.currentLanguage];
     }
 
-    isRTL(): boolean
-    {
+    getTranslations(language?: SupportedLanguage): Translations {
+        const lang = language ?? this.currentLanguage;
+        return translations[lang] ?? translations[this.fallbackLanguage];
+    }
+
+    isRTL(): boolean {
         return this.getLanguageConfig().isRTL;
     }
 
-    t(key: string): string
-    {
-        const keys = key.split('.');
-        let value  = translations[this.currentLanguage];
+    t(key: string): string {
+        const keys = key.split(".");
+        const result =
+            resolveNestedString(translations[this.currentLanguage], keys) ??
+            resolveNestedString(translations[this.fallbackLanguage], keys);
 
-        for (const k of keys)
-        {
-            if (typeof value === 'object' && value !== null && k in value)
-                value = (value as Record<string, any>)[k];
-            else
-            {
-                // Fallback to English if key not found
-                let fallbackValue = translations[this.fallbackLanguage];
+        return result ?? key;
+    }
 
-                for (const fallbackKey of keys) {
-                    if (typeof fallbackValue === 'object' && fallbackValue !== null && fallbackKey in fallbackValue)
-                        fallbackValue = (fallbackValue as Record<string, any>)[fallbackKey];
-                    else
-                    {
-                        console.warn(`Translation key "${key}" not found`);
-                        return key;
-                    }
-                }
-                value = fallbackValue;
-                break;
-            }
+    public static detectLanguage(text: string): SupportedLanguage {
+        if (/[\u0590-\u05FF]/.test(text)) {
+            return "he";
         }
-
-
-        return typeof value === 'string' ? value : key;
-    }
-
-    // Utility method to detect language from text
-    public static detectLanguage(text: string): SupportedLanguage
-    {
-        // Hebrew detection
-        if (/[\u0590-\u05FF]/.test(text))
-            return 'he';
-        
-        // TODO: Add more language detection logic here
-        
-        // Default to English
-        return 'en';
-    }
-
-    // Utility method for text direction and alignment
-    getTextAlignment(text?: string): 'left' | 'right' | 'center'
-    {
-        const language = text ? I18n.detectLanguage(text) : this.currentLanguage;
-        const config = LANGUAGE_CONFIGS[language];
-        return config.isRTL ? 'right' : 'left';
-    }
-
-    // Utility method for positioning text in RTL contexts
-    getTextPosition(text: string, textWidth: number, containerWidth: number, margin = 0): number
-    {
-        const isTextRTL = I18n.detectLanguage(text);
-        const config = LANGUAGE_CONFIGS[isTextRTL];
-        
-        if (config.isRTL)
-            return containerWidth - margin - textWidth;
-        else
-            return margin;
+        return "en";
     }
 }
 
-// Create a singleton instance
 export const i18n = new I18n();
 export const i18nPDF = new I18n();
 
-// Utility functions for backwards compatibility and convenience
-export function isRTL(text?: string): boolean
-{
+export function isRTL(text?: string): boolean {
     if (text) {
         const detectedLang = I18n.detectLanguage(text);
         return LANGUAGE_CONFIGS[detectedLang].isRTL;
@@ -131,33 +81,10 @@ export function isRTL(text?: string): boolean
     return i18n.isRTL();
 }
 
-export function isHebrew(text: string): boolean
-{
-    return I18n.detectLanguage(text) === 'he';
+export function getTextDirection(text: string): "rtl" | "ltr" {
+    return isRTL(text) ? "rtl" : "ltr";
 }
 
-// Usage examples and helper functions
-export function formatDate(date: Date, language?: SupportedLanguage): string
-{
-    const locale = language || i18n.getCurrentLanguage();
-    
-    const localeMap: Record<SupportedLanguage, string> = {
-        en: 'en-US',
-        he: 'he-IL',
-        es: 'es-ES',
-        fr: 'fr-FR',
-        de: 'de-DE',
-    };
-    
-    return date.toLocaleDateString(localeMap[locale]);
-}
-
-export function getTextDirection(text: string): 'rtl' | 'ltr'
-{
-    return isRTL(text) ? 'rtl' : 'ltr';
-}
-
-export function getTextAlign(text: string): "right" | "left"
-{
+export function getTextAlign(text: string): "right" | "left" {
     return isRTL(text) ? "right" : "left";
 }

@@ -1,147 +1,90 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { getCharacterList, parseMetadata } from "../services/scriptParsing";
-import { App, stringifyYaml, TFile } from "obsidian";
+import { parseMetadata, serializeScript } from "../services/scriptParsing";
 import { getTextDirection, i18n } from "../i18n/i18n";
 import ScriptViewWriter from "./components/ScriptWriter";
 import MetadataPage from "./components/MetadataPage";
-import { ScriptMetadata } from "src/models/ScriptMetadata";
+import { DEFAULT_METADATA, ScriptMetadata } from "../models/ScriptMetadata";
+
+export type EditorMode = "preview" | "source" | "metadata";
 
 interface Props {
-    app: App;
-    file: TFile;
-    setData: (data: string) => void;
-    characterFolder: string;
-    openCharacterNote: (name: string) => void;
-    setModeCallback: (cb: (mode: "preview" | "source" | "metadata") => void) => void;
+    data: string;
+    mode: EditorMode;
+    onChange: (data: string) => void;
 }
 
-function _ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): JSX.Element {
-    // Text and file vars
-    const [fullFile, setFullFile] = useState("");
+export default function ScriptEditor({ data, mode, onChange }: Props): JSX.Element {
+    const [fullFile, setFullFile] = useState(data);
     const [scriptContent, setScriptContent] = useState("");
-    const [metadata, setMetadata] = useState<ScriptMetadata>({
-        title: "",
-        writers: "inherit",
-        prodCompany: "inherit",
-        date: "inherit",
-        characterFolder: "inherit",
-        locationFolder: "inherit"
-    });
+    const [metadata, setMetadata] = useState<ScriptMetadata>({ ...DEFAULT_METADATA });
+    const lastEmittedData = useRef(data);
 
-    // Editor vars
-    const [mode, setMode] = useState<"preview" | "source" | "metadata">("preview");
-    const [characterSuggestionsOpen, setCharacterSuggestionsOpen] = useState(false);
-    const [suggestionAnchor, setSuggestionAnchor] = useState<{ top: number; left: number } | null>(null);
-    const [characterSuggestionSelectedIndex, setCharacterSuggestionSelectedIndex] = useState(0);
-    const [characterQuery, setCharacterQuery] = useState("");
-    const [filteredCharacters, setFilteredCharacters] = useState<string[]>([]);
-    const isInternalUpdate = useRef(false);
-
-    // Set mode callback
     useEffect(() => {
-        setModeCallback(setMode);
-    }, [setModeCallback]);
-
-    // Inner functions
-    function updateFullText(newMetadata: ScriptMetadata, newScriptContent: string): void {
-        const hasMetadata = Object.values(newMetadata).some(value => value !== "");
-
-        const newFullText = hasMetadata
-            ? `---\n${stringifyYaml(newMetadata)}---\n${newScriptContent}`
-            : newScriptContent;
-
-        isInternalUpdate.current = true;
-
-        setFullFile(newFullText);
-        setScriptContent(newScriptContent); // preserve exact editor text
-        setData(newFullText);
-    }
-
-    function updateSource(newFullText: string): void {
-        setFullFile(newFullText);
-        setData(newFullText);
-    }
-
-    // Load file
-    useEffect(() => {
-        app.vault.read(file).then(setFullFile);
-    }, [file]);
-
-    // Parse text into metadata and content whenever fullText changes
-    useEffect(() => {
-        const parsed = parseMetadata(fullFile);
-
-        setMetadata(parsed.metadata);
-
-        if (!isInternalUpdate.current) {
-            setScriptContent(parsed.contentWithoutFrontmatter);
+        if (data === lastEmittedData.current && fullFile !== "") {
+            return;
         }
+        lastEmittedData.current = data;
+        setFullFile(data);
 
-        isInternalUpdate.current = false;
-    }, [fullFile]);
+        const parsed = parseMetadata(data);
+        setMetadata(parsed.metadata);
+        setScriptContent(parsed.contentWithoutFrontmatter);
+    }, [data]);
 
+    function handleStructuredChange(newMetadata: ScriptMetadata, newScriptContent: string): void {
+        const newFullText = serializeScript(newMetadata, newScriptContent);
+        lastEmittedData.current = newFullText;
 
-    useEffect(() => {
-        setFilteredCharacters(
-            getCharacterList(app, metadata, characterFolder)
-                .filter(c => c.toLowerCase().startsWith(characterQuery.toLowerCase()))
-        );
-    }, [characterQuery]);
+        setMetadata(newMetadata);
+        setScriptContent(newScriptContent);
+        setFullFile(newFullText);
+        onChange(newFullText);
+    }
+
+    function handleSourceChange(newFullText: string): void {
+        lastEmittedData.current = newFullText;
+        const parsed = parseMetadata(newFullText);
+
+        setFullFile(newFullText);
+        setMetadata(parsed.metadata);
+        setScriptContent(parsed.contentWithoutFrontmatter);
+        onChange(newFullText);
+    }
 
     return (
         <div className="se-root">
-            {/* Title */}
             <div className="se-header" dir={getTextDirection(metadata.title)}>
                 <h2 className="se-title">
-                    {metadata.title || "Untitled Script"} {metadata.subtitle && `- ${metadata.subtitle}`}
+                    {metadata.title || "Untitled Script"}{" "}
+                    {metadata.subtitle && `- ${metadata.subtitle}`}
                 </h2>
                 {mode === "metadata" && (
-                    <h2 className="se-meta-title">
-                        {i18n.t("scriptEditor.properties")}
-                    </h2>
+                    <h2 className="se-meta-title">{i18n.t("scriptEditor.properties")}</h2>
                 )}
             </div>
 
-            {/* TODO character suggestion */}
-
-            {/* Page */}
-            {mode === "metadata"
-                ? <MetadataPage
+            {mode === "metadata" ? (
+                <MetadataPage
                     metadata={metadata}
-                    updateMetadata={(newMetadata: ScriptMetadata) => {
-                        setMetadata(newMetadata);
-                        updateFullText(newMetadata, scriptContent);
-                    }}
+                    updateMetadata={(newMetadata) =>
+                        handleStructuredChange(newMetadata, scriptContent)
+                    }
                 />
-                : <ScriptViewWriter
+            ) : (
+                <ScriptViewWriter
                     key={mode}
-                    value={(mode === "source") ? fullFile : scriptContent}
-                    onChange={(newText: string) => {
-                        if (mode === "source")
-                            updateSource(newText)
-                        else
-                            updateFullText(metadata, newText);
+                    value={mode === "source" ? fullFile : scriptContent}
+                    onChange={(newText) => {
+                        if (mode === "source") {
+                            handleSourceChange(newText);
+                        } else {
+                            handleStructuredChange(metadata, newText);
+                        }
                     }}
                     livePreview={mode === "preview"}
                 />
-            }
+            )}
         </div>
-    );
-}
-
-
-export default function ScriptEditor({ app, file, setData, characterFolder, setModeCallback, openCharacterNote }: Props): () => JSX.Element {
-    return () => (
-        <>
-            <_ScriptEditor
-                app={app}
-                file={file}
-                setData={setData}
-                characterFolder={characterFolder}
-                setModeCallback={setModeCallback}
-                openCharacterNote={openCharacterNote}
-            />
-        </>
     );
 }

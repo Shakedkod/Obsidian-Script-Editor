@@ -158,3 +158,22 @@
   border-radius: 0.25rem;
   font-family: inherit;
 }
+.se-editor .cm-tooltip-autocomplete {
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.25rem;
+  box-shadow: var(--shadow-s);
+  font-family: inherit;
+}
+.se-editor .cm-tooltip-autocomplete > ul > li {
+  padding: 0.25rem 0.5rem;
+  color: var(--text-normal);
+}
+.se-editor .cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.se-editor .cm-script-autocomplete-rtl {
+  direction: rtl;
+  text-align: right;
+}

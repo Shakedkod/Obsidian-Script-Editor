@@ -1,5 +1,4 @@
-export interface ScriptMetadata 
-{
+export interface ScriptMetadata {
     title: string;
     subtitle?: string;
     writers: string[] | "inherit";
@@ -8,3 +7,13 @@ export interface ScriptMetadata
     characterFolder?: string | "inherit";
     locationFolder?: string | "inherit";
 }
+
+export const DEFAULT_METADATA: ScriptMetadata = {
+    title: "",
+    subtitle: "",
+    writers: "inherit",
+    prodCompany: "inherit",
+    date: "inherit",
+    characterFolder: "inherit",
+    locationFolder: "inherit",
+};

@@ -1,13 +1,12 @@
 import { ScriptMetadata } from "./ScriptMetadata";
 
-export enum ScriptElementType
-{
+export enum ScriptElementType {
     SceneHeading,
     Action,
     Character,
     Dialogue,
     Transition,
-    Subheader
+    Subheader,
 }
 
 export type ScriptElement = {
@@ -21,13 +20,17 @@ export type Scene = {
     elements: ScriptElement[];
 };
 
-export interface Script 
-{
+export interface Script {
     metadata: ScriptMetadata;
     scenes: Scene[];
-};
+}
 
-export function isScene(obj: unknown): obj is Scene
-{
-    return typeof obj === "object" && obj !== null && ("id" in obj) && ("heading" in obj) && ("elements" in obj);
+export function isScene(obj: unknown): obj is Scene {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        "id" in obj &&
+        "heading" in obj &&
+        "elements" in obj
+    );
 }

@@ -24,5 +24,24 @@ export const he: Translations = {
         writers: "כותבים",
         productionCompany: "חברת הפקה",
         date: "תאריך",
-    }
+        characterFolder: "תיקיית דמויות",
+        locationFolder: "תיקיית מיקומים",
+    },
+    autocomplete: {
+        sceneTypes: ["פנים.", "חוץ.", "פנים/חוץ.", "חוץ/פנים."],
+        timesOfDay: [
+            "יום",
+            "לילה",
+            "בוקר",
+            "ערב",
+            "צהריים",
+            "אחר הצהריים",
+            "בין ערביים",
+            "זריחה",
+            "שקיעה",
+            "המשך",
+            "מאוחר יותר",
+            "בו זמנית",
+        ],
+    },
 };

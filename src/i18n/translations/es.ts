@@ -24,5 +24,21 @@ export const es: Translations = {
         writers: "Escritores",
         productionCompany: "Compañía de producción",
         date: "Fecha",
+        characterFolder: "Carpeta de personajes",
+        locationFolder: "Carpeta de ubicaciones",
+    },
+    autocomplete: {
+        sceneTypes: ["INT.", "EXT.", "INT./EXT.", "EXT./INT."],
+        timesOfDay: [
+            "DÍA",
+            "NOCHE",
+            "MAÑANA",
+            "TARDE",
+            "ATARDECER",
+            "AMANECER",
+            "MÁS TARDE",
+            "CONTINUO",
+            "MISMO TIEMPO",
+        ],
     },
 };

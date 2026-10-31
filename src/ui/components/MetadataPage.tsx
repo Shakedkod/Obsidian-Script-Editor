@@ -1,117 +1,110 @@
 import React from "react";
-import { ScriptMetadata } from "src/models/ScriptMetadata";
+import { ScriptMetadata } from "../../models/ScriptMetadata";
+import { i18n } from "../../i18n/i18n";
 
-interface MetadataItemProps
-{
-    field: string;
-    inherited?: boolean;
+interface MetadataItemProps {
+    field: keyof ScriptMetadata;
     data: string;
-    handleMetadataChange: (key: string, value: string) => void;
+    onChange: (value: string) => void;
     label: string;
     placeholder: string;
 }
 
-function MetadataItem({ field, inherited, data, handleMetadataChange, label, placeholder }: MetadataItemProps): JSX.Element
-{
-    //if (!inherited)
-        return (
-            <div className="se-field" key={field}>
-                <label className="se-field-label">{label}:</label>
-                <input
-                    className="se-field-input"
-                    type="text"
-                    value={data}
-                    onChange={(e) => handleMetadataChange(field, e.target.value)}
-                    placeholder={placeholder}
-                />
-            </div>
-        );
-
-    //return (
-    //    <div className="se-field" key={field}>
-    //        <label className="se-field-label">{label}:</label>
-    //        <input
-    //            className="se-field-input-disabled"
-    //            type="text"
-    //            value={data}
-    //            onChange={(e) => handleMetadataChange(field, e.target.value)}
-    //            placeholder={placeholder}
-    //            disabled
-    //        />
-    //    </div>
-    //);
+function MetadataItem({
+    field,
+    data,
+    onChange,
+    label,
+    placeholder,
+}: MetadataItemProps): JSX.Element {
+    return (
+        <div className="se-field" key={field}>
+            <label className="se-field-label">{label}:</label>
+            <input
+                className="se-field-input"
+                type="text"
+                value={data}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+            />
+        </div>
+    );
 }
 
-interface MetadataPageProps
-{
+interface MetadataPageProps {
     metadata: ScriptMetadata;
     updateMetadata: (newMetadata: ScriptMetadata) => void;
 }
 
-export default function MetadataPage({ metadata, updateMetadata }: MetadataPageProps): JSX.Element
-{
+export default function MetadataPage({
+    metadata,
+    updateMetadata,
+}: MetadataPageProps): JSX.Element {
     return (
         <div className="se-page">
-            {/* Actual Script Items */}
             <section className="se-meta-section">
                 <MetadataItem
                     field="title"
-                    inherited={false}
                     data={metadata.title}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Title"
+                    onChange={(value) => updateMetadata({ ...metadata, title: value })}
+                    label={i18n.t("scriptEditor.title")}
                     placeholder="Enter script title"
                 />
                 <MetadataItem
                     field="subtitle"
-                    inherited={false}
                     data={metadata.subtitle || ""}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Subtitle"
+                    onChange={(value) => updateMetadata({ ...metadata, subtitle: value })}
+                    label={i18n.t("scriptEditor.subtitle")}
                     placeholder="Enter script subtitle"
                 />
                 <MetadataItem
                     field="writers"
-                    inherited={metadata.writers === "inherit"}
-                    data={Array.isArray(metadata.writers) ? metadata.writers.join(", ") : metadata.writers}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value.split(",").map(s => s.trim()) })}
-                    label="Writers"
+                    data={
+                        Array.isArray(metadata.writers)
+                            ? metadata.writers.join(", ")
+                            : metadata.writers
+                    }
+                    onChange={(value) =>
+                        updateMetadata({
+                            ...metadata,
+                            writers:
+                                value.trim() === "inherit"
+                                    ? "inherit"
+                                    : value.split(",").map((s) => s.trim()),
+                        })
+                    }
+                    label={i18n.t("scriptEditor.writers")}
                     placeholder="Enter writer(s) name"
                 />
                 <MetadataItem
-                    field="prod_company"
-                    inherited={metadata.prodCompany === "inherit"}
+                    field="prodCompany"
                     data={metadata.prodCompany}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Production Company"
+                    onChange={(value) => updateMetadata({ ...metadata, prodCompany: value })}
+                    label={i18n.t("scriptEditor.productionCompany")}
                     placeholder="Enter production company"
                 />
                 <MetadataItem
                     field="date"
-                    inherited={metadata.date === "inherit"}
                     data={metadata.date}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Date"
+                    onChange={(value) => updateMetadata({ ...metadata, date: value })}
+                    label={i18n.t("scriptEditor.date")}
                     placeholder="Enter date"
                 />
             </section>
 
-            {/* Plugin Metadata Items */}
             <section className="se-meta-section">
                 <MetadataItem
                     field="characterFolder"
-                    inherited={metadata.characterFolder === "inherit"}
                     data={metadata.characterFolder || ""}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Character Folder"
+                    onChange={(value) => updateMetadata({ ...metadata, characterFolder: value })}
+                    label={i18n.t("scriptEditor.characterFolder")}
                     placeholder="Enter character notes folder"
                 />
                 <MetadataItem
                     field="locationFolder"
-                    inherited={metadata.locationFolder === "inherit"}
                     data={metadata.locationFolder || ""}
-                    handleMetadataChange={(field, value) => updateMetadata({ ...metadata, [field]: value })}
-                    label="Location Folder"
+                    onChange={(value) => updateMetadata({ ...metadata, locationFolder: value })}
+                    label={i18n.t("scriptEditor.locationFolder")}
                     placeholder="Enter location notes folder"
                 />
             </section>

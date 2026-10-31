@@ -1,5 +1,4 @@
-export interface Translations
-{
+export interface Translations {
     pdf: {
         writtenBy: string;
         producedBy: string;
@@ -23,13 +22,18 @@ export interface Translations
         writers: string;
         productionCompany: string;
         date: string;
+        characterFolder: string;
+        locationFolder: string;
+    };
+    autocomplete: {
+        sceneTypes: string[];
+        timesOfDay: string[];
     };
 }
 
-export type SupportedLanguage = 'en' | 'he' | 'es' | 'fr' | 'de'; // Add more as needed
+export type SupportedLanguage = "en" | "he" | "es" | "fr" | "de";
 
-export interface LanguageConfig
-{
+export interface LanguageConfig {
     code: SupportedLanguage;
     name: string;
     isRTL: boolean;

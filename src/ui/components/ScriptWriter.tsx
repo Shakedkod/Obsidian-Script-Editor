@@ -3,8 +3,9 @@ import { useEffect, useRef } from "react";
 import { EditorState, Compartment, EditorSelection } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete"
+import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { sceneNumberField, scriptLivePreview } from "./ViewMode";
+import { scriptAutocomplete } from "./ScriptAutocomplete";
 
 interface Props {
     value: string;
@@ -12,8 +13,7 @@ interface Props {
     livePreview: boolean;
 }
 
-export default function ScriptViewWriter({ value, onChange, livePreview }: Props): JSX.Element
-{
+export default function ScriptViewWriter({ value, onChange, livePreview }: Props): JSX.Element {
     const hostRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const previewCompartment = useRef(new Compartment()).current;
@@ -31,6 +31,7 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
                 extensions: [
                     history(),
                     closeBrackets(),
+                    scriptAutocomplete(),
                     keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap]),
                     EditorView.lineWrapping,
                     sceneNumberField,
@@ -68,8 +69,6 @@ export default function ScriptViewWriter({ value, onChange, livePreview }: Props
             return;
         }
 
-        // Replace the whole document but keep the selection clamped to the new
-        // length so cursor movement never references a stale position.
         const nextHead = Math.min(view.state.selection.main.head, nextValue.length);
 
         applyingExternal.current = true;

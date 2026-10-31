@@ -1,117 +1,102 @@
-import { getLanguage, Notice, Plugin, WorkspaceLeaf } from "obsidian";
-
+import { getLanguage, Plugin, WorkspaceLeaf } from "obsidian";
 import { ScriptEditorView, SCRIPT_EDITOR_VIEW_TYPE } from "./ScriptView";
 import { i18n } from "./i18n/i18n";
+import { parseMetadata } from "./services/scriptParsing";
 
-export default class ScriptEditorPlugin extends Plugin
-{
-    private view: ScriptEditorView;
-    private scriptMode: "preview" | "source" | "metadata" = "preview";
-    statusBarItemEl: HTMLElement | undefined;
+const WORDS_PER_MINUTE = 130;
 
-    // Estimate script reading time
-    updateRuntimeEstimate(): void
-    {
-		if (this.statusBarItemEl) {
-			this.statusBarItemEl.remove();
-			this.statusBarItemEl = undefined;
-		}
+export default class ScriptEditorPlugin extends Plugin {
+    private statusBarItemEl: HTMLElement | null = null;
 
-		const activeFile = this.app.workspace.getActiveFile();
-		if (!activeFile || activeFile.extension !== "script") return;
-
-		this.app.vault.read(activeFile).then((content) => {
-			const lines = content.split("\n");
-
-			let wordCount = 0;
-			for (const line of lines) {
-				const trimmed = line.trim();
-				if (!trimmed) continue;
-				// You may want to skip character or scene headings here
-				wordCount += trimmed.split(/\s+/).length;
-			}
-
-			const minutes = Math.max(1, Math.round(wordCount / 130));
-
-			if (!this.statusBarItemEl) {
-				this.statusBarItemEl = this.addStatusBarItem();
-			}
-
-			this.statusBarItemEl.setText(`🎬 ${minutes} min`);
-		});
-	}
-
-    async onload(): Promise<void>
-    {
+    async onload(): Promise<void> {
         i18n.setLanguageFromString(getLanguage());
 
         this.registerView(
             SCRIPT_EDITOR_VIEW_TYPE,
-            (leaf: WorkspaceLeaf) => (this.view = new ScriptEditorView(leaf))
+            (leaf: WorkspaceLeaf) => new ScriptEditorView(leaf)
         );
         this.registerExtensions(["script"], SCRIPT_EDITOR_VIEW_TYPE);
 
+        this.statusBarItemEl = this.addStatusBarItem();
+        this.statusBarItemEl.hide();
+
         this.registerEvent(
-			this.app.workspace.on("active-leaf-change", () => {
-				this.updateRuntimeEstimate();
-			})
-		);
+            this.app.workspace.on("active-leaf-change", () => {
+                this.updateRuntimeEstimate();
+            })
+        );
 
-        // Script Mode Change
-        this.addCommand({
-			id: "toggle-preview-mode",
-			name: "Toggle preview mode",
-			callback: () => {
-				// call a method to toggle view mode
-				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptEditorView);
-				if (activeLeaf) {
-					this.scriptMode = this.scriptMode === "preview" ? "source" : "preview";
-					activeLeaf.setMode(this.scriptMode);
-				}
-			},
-		});
-
-		this.addCommand({
-			id: "edit-script-metadata",
-			name: "Edit script metadata",
-			callback: () => {
-				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptEditorView);
-				if (activeLeaf) {
-					this.scriptMode = this.scriptMode === "metadata" ? "preview" : "metadata";
-					activeLeaf.setMode(this.scriptMode);
-				} else {
-					new Notice("No script view is currently active.");
-				}
-			},
-		});
+        this.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file === this.app.workspace.getActiveFile()) {
+                    this.updateRuntimeEstimate();
+                }
+            })
+        );
 
         this.addCommand({
-			id: "export-script-to-pdf",
-			name: "Export script to PDF",
-			callback: async () => {
-				const activeLeaf = this.app.workspace.getActiveViewOfType(ScriptEditorView);
-				if (activeLeaf) {
-					try {
-						await activeLeaf.exportToPDF();
-						new Notice("Script exported to PDF successfully.");
-					} catch (error) {
-						new Notice("Failed to export script: " + error.message);
-					}
-				} else {
-					new Notice("No script view is currently active.");
-				}
-			},
-		});
+            id: "toggle-preview-mode",
+            name: "Toggle preview mode",
+            checkCallback: (checking: boolean) => {
+                const view = this.app.workspace.getActiveViewOfType(ScriptEditorView);
+                if (!view) return false;
+                if (!checking) {
+                    view.setMode(view.getMode() === "preview" ? "source" : "preview");
+                }
+                return true;
+            },
+        });
 
-        this.app.workspace.onLayoutReady(this.onLayoutReady.bind(this));
+        this.addCommand({
+            id: "edit-script-metadata",
+            name: "Edit script metadata",
+            checkCallback: (checking: boolean) => {
+                const view = this.app.workspace.getActiveViewOfType(ScriptEditorView);
+                if (!view) return false;
+                if (!checking) {
+                    view.setMode(view.getMode() === "metadata" ? "preview" : "metadata");
+                }
+                return true;
+            },
+        });
+
+        this.addCommand({
+            id: "export-script-to-pdf",
+            name: "Export script to PDF",
+            checkCallback: (checking: boolean) => {
+                const view = this.app.workspace.getActiveViewOfType(ScriptEditorView);
+                if (!view) return false;
+                if (!checking) {
+                    view.exportToPDFWithNotice();
+                }
+                return true;
+            },
+        });
     }
 
-    onLayoutReady(): void
-    {
-        if (this.app.workspace.getLeavesOfType(SCRIPT_EDITOR_VIEW_TYPE).length)  return;
+    private async updateRuntimeEstimate(): Promise<void> {
+        if (!this.statusBarItemEl) return;
 
-        this.app.workspace.getRightLeaf(false).setViewState({
-            type: SCRIPT_EDITOR_VIEW_TYPE,
-        });
+        const activeFile = this.app.workspace.getActiveFile();
+        if (!activeFile || activeFile.extension !== "script") {
+            this.statusBarItemEl.hide();
+            return;
+        }
+
+        const rawContent = await this.app.vault.read(activeFile);
+        const { contentWithoutFrontmatter } = parseMetadata(rawContent);
+
+        let wordCount = 0;
+        for (const line of contentWithoutFrontmatter.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("# ") || trimmed.startsWith("@ ")) {
+                continue;
+            }
+            wordCount += trimmed.split(/\s+/).length;
+        }
+
+        const minutes = Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE));
+        this.statusBarItemEl.setText(`🎬 ${minutes} min`);
+        this.statusBarItemEl.show();
     }
 }

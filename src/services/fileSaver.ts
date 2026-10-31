@@ -1,43 +1,58 @@
+interface SaveFilePickerOptions {
+    suggestedName?: string;
+    types?: Array<{
+        description: string;
+        accept: Record<string, string[]>;
+    }>;
+}
+
+interface FileSystemWritableFileStream {
+    write(data: Blob): Promise<void>;
+    close(): Promise<void>;
+}
+
+interface FileSystemFileHandle {
+    createWritable(): Promise<FileSystemWritableFileStream>;
+}
+
+type WindowWithFilePicker = Window & {
+    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
+};
+
 export function saveAsOld(blob: Blob, filename: string): void {
-    // Create a temporary URL for the blob
     const url = URL.createObjectURL(blob);
-    
-    // Create a temporary anchor element
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
-    
-    // Trigger the download
+
     document.body.appendChild(link);
     link.click();
-    
-    // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
 
 export async function saveAs(blob: Blob, filename: string): Promise<void> {
-    // Check if the File System Access API is supported
-    if ('showSaveFilePicker' in window) {
+    const win = window as WindowWithFilePicker;
+    if (typeof win.showSaveFilePicker === "function") {
         try {
-            const handle = await (window as any).showSaveFilePicker({
+            const handle = await win.showSaveFilePicker({
                 suggestedName: filename,
-                types: [{
-                    description: 'PDF Files',
-                    accept: { 'application/pdf': ['.pdf'] },
-                }],
+                types: [
+                    {
+                        description: "PDF Files",
+                        accept: { "application/pdf": [".pdf"] },
+                    },
+                ],
             });
-            
+
             const writable = await handle.createWritable();
             await writable.write(blob);
             await writable.close();
             return;
-        } catch (err) {
-            // User cancelled or error occurred, fall back to basic method
-            console.log('File System Access API failed, using fallback');
+        } catch {
+            // Fall back to anchor download if cancelled or unsupported
         }
     }
-    
-    // Fallback to basic method
+
     saveAsOld(blob, filename);
 }
