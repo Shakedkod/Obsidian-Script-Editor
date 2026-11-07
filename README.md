@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 
-**Script Editor** is a powerful, distraction-free screenwriting plugin for [Obsidian](https://obsidian.md). Write industry-standard screenplays directly in your vault with a dynamic live preview, smart autocomplete, real-time runtime estimates, and professional PDF export — with full support for both **LTR (English, Spanish)** and **RTL (Hebrew)** scripts.
+**Script Editor** is a powerful, distraction-free screenwriting plugin for [Obsidian](https://obsidian.md). Write industry-standard screenplays directly in your vault with a dynamic live preview, smart autocomplete, real-time runtime estimates, and professional PDF export — with full support for both **LTR (English)** and **RTL (Hebrew)** scripts.
 
 ---
 
@@ -15,7 +15,7 @@
 - **⚡ Smart Screenplay Autocomplete**:
   - Context-aware autocomplete for scene types (`INT.`, `EXT.`, `בפנים.`, `בחוץ.`, etc.).
   - Time-of-day suggestions (`DAY`, `NIGHT`, `LATER`, `בוקר`, `ערב`, etc.) after typing a hyphen (`-`).
-  - Automatic language detection dynamically adjusts suggestions between English, Hebrew, and Spanish.
+  - Automatic language detection dynamically adjusts suggestions between English and Hebrew.
 - **📄 Industry-Standard PDF Export**:
   - Exports to Hollywood-standard screenplay format (12pt Courier, precise inch margins, header numbering, and title page).
   - Built-in embedded font engine for Hebrew (**Alef**) and English (**Courier**).
