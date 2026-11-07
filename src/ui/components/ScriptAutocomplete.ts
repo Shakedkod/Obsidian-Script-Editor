@@ -7,7 +7,7 @@ import {
     insertCompletionText,
     pickedCompletion,
 } from "@codemirror/autocomplete";
-import { Extension, Prec } from "@codemirror/state";
+import { EditorState, Extension, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { i18n } from "../../i18n/i18n";
 import { SupportedLanguage } from "../../i18n/types";
@@ -112,8 +112,18 @@ export function sceneHeadingCompletionSource(context: CompletionContext): Comple
     };
 }
 
+const closeBracketsConfig = EditorState.languageData.of((state, pos) => {
+    const line = state.doc.lineAt(pos);
+    const textBefore = line.text.slice(0, pos - line.from);
+    if (textBefore === "" || textBefore === '"') {
+        return [{ closeBrackets: { brackets: ["(", "[", "{", "'"] } }];
+    }
+    return [{ closeBrackets: { brackets: ["(", "[", "{", "'", '"'] } }];
+});
+
 export function scriptAutocomplete(): Extension {
     return [
+        closeBracketsConfig,
         autocompletion({
             override: [sceneHeadingCompletionSource],
             activateOnTyping: true,
